@@ -1,0 +1,27 @@
+# Database files
+*.db
+*.sqlite
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Environment
+venv/
+.env
+.env.local
+
+# VS Code
+.vscode/
+
+# Test artifacts
+test.db
+
+# OS
+.DS_Store
+Thumbs.db
