@@ -22,19 +22,28 @@ def create_recipe(
         prep_time_minutes=recipe.prep_time_minutes,
         owner_id=current_user.id
     )
-    # Attach ingredients with quantities via association table
+    db.add(new_recipe)
+    db.flush()  # Get the new recipe ID without committing
+
+    # Insert into association table directly to include quantity_g
     for item in recipe.ingredients:
         ingredient = db.query(models.Ingredient).filter(
             models.Ingredient.id == item.ingredient_id
         ).first()
         if not ingredient:
+            db.rollback()
             raise HTTPException(
                 status_code=404,
                 detail=f"Ingredient ID {item.ingredient_id} not found"
             )
-        new_recipe.ingredients.append(ingredient)
+        db.execute(
+            models.recipe_ingredients.insert().values(
+                recipe_id=new_recipe.id,
+                ingredient_id=item.ingredient_id,
+                quantity_g=item.quantity_g
+            )
+        )
 
-    db.add(new_recipe)
     db.commit()
     db.refresh(new_recipe)
     return new_recipe

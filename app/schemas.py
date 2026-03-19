@@ -14,8 +14,7 @@ class UserOut(BaseModel):
     email: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class Token(BaseModel):
     access_token: str
@@ -41,6 +40,7 @@ class IngredientCreate(BaseModel):
     water: Optional[float] = 0.0
     cholesterol: Optional[float] = 0.0
     alcohol: Optional[float] = 0.0
+    allergens: Optional[str] = ""  # Comma-separated list of allergens, e.g. "gluten,dairy"
 
 class IngredientUpdate(BaseModel):
     name: Optional[str] = None
@@ -60,13 +60,13 @@ class IngredientUpdate(BaseModel):
     water: Optional[float] = None
     cholesterol: Optional[float] = None
     alcohol: Optional[float] = None
+    allergens: Optional[str] = None  # Allow clearing allergens by setting to empty string
 
 class IngredientOut(IngredientCreate):
     id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 # ─── Recipe ──────────────────────────────────────────────
 class RecipeIngredientInput(BaseModel):
@@ -98,8 +98,7 @@ class RecipeOut(BaseModel):
     owner_id: Optional[int]
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 # ─── Nutrition Analysis ──────────────────────────────────
 class NutritionSummary(BaseModel):
