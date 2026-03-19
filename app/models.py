@@ -52,6 +52,9 @@ class Ingredient(Base):
     cholesterol = Column(Float, default=0.0)
     alcohol = Column(Float, default=0.0)
 
+    # Allergens stored as comma-separated string e.g. "gluten,dairy,nuts"
+    allergens = Column(String, default="")
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     recipes = relationship("Recipe", secondary=recipe_ingredients, back_populates="ingredients")
@@ -70,3 +73,5 @@ class Recipe(Base):
 
     owner = relationship("User", back_populates="recipes")
     ingredients = relationship("Ingredient", secondary=recipe_ingredients, back_populates="recipes")
+
+    
