@@ -16,12 +16,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
 
 def hash_password(password: str) -> str:
-    """Hash a plain-text password using bcrypt."""
-    return pwd_context.hash(password)
+    """Hash a plain-text password using bcrypt (max 72 bytes)."""
+    return pwd_context.hash(password[:72])
 
 def verify_password(plain: str, hashed: str) -> bool:
     """Verify a plain-text password against its hashed version."""
-    return pwd_context.verify(plain, hashed)
+    return pwd_context.verify(plain[:72], hashed)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Generate a signed JWT access token."""
