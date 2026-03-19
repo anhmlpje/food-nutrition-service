@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routers import users, ingredients, recipes, nutrition, allergens, ai
+from app.routers import users, ingredients, recipes, nutrition, allergens
 
 # Create all database tables on startup
 Base.metadata.create_all(bind=engine)
