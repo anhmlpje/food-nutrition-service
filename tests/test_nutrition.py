@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -20,6 +21,7 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture(autouse=True)
 def setup_database():
+    """Create tables before each test and drop after."""
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
@@ -33,11 +35,11 @@ def auth_headers(client):
     client.post("/users/register", json={
         "username": "testuser",
         "email": "test@example.com",
-        "password": "password123"
+        "password": "Password123"
     })
     response = client.post("/users/login", data={
         "username": "testuser",
-        "password": "password123"
+        "password": "Password123"
     })
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
@@ -180,3 +182,60 @@ class TestCompareIngredients:
 
         response = client.get(f"/nutrition/compare?id1={ing['id']}&id2=99999")
         assert response.status_code == 404
+
+
+class TestNutrientDensity:
+    def test_top_nutrient_density_returns_list(self, client, auth_headers):
+        """Nutrient density endpoint returns a ranked list."""
+        client.post("/ingredients/", json={
+            "name": "Spinach",
+            "calories": 23.0,
+            "protein": 2.9,
+            "fiber": 2.2,
+            "vitamin_c": 28.1,
+            "iron": 2.71,
+            "calcium": 99.0,
+            "potassium": 558.0,
+        }, headers=auth_headers)
+
+        response = client.get("/nutrition/top-nutrient-density?limit=5")
+        assert response.status_code == 200
+        assert isinstance(response.json(), list)
+
+    def test_top_nutrient_density_ordering(self, client, auth_headers):
+        """Results are ordered by nutrient density score descending."""
+        client.post("/ingredients/", json={
+            "name": "Low Nutrient Food",
+            "calories": 500.0,
+            "protein": 1.0,
+            "fiber": 0.0,
+            "sugars": 50.0,
+            "sodium": 1000.0,
+        }, headers=auth_headers)
+        client.post("/ingredients/", json={
+            "name": "High Nutrient Food",
+            "calories": 50.0,
+            "protein": 10.0,
+            "fiber": 8.0,
+            "vitamin_c": 60.0,
+            "iron": 5.0,
+            "calcium": 200.0,
+        }, headers=auth_headers)
+
+        response = client.get("/nutrition/top-nutrient-density?limit=10")
+        results = response.json()
+        if len(results) >= 2:
+            assert results[0]["nutrient_density_score"] >= results[1]["nutrient_density_score"]
+
+    def test_nutrient_density_score_range(self, client, auth_headers):
+        """All nutrient density scores are between 0 and 100."""
+        client.post("/ingredients/", json={
+            "name": "Test Food",
+            "calories": 100.0,
+            "protein": 5.0,
+            "fiber": 3.0,
+        }, headers=auth_headers)
+
+        response = client.get("/nutrition/top-nutrient-density?limit=10")
+        for item in response.json():
+            assert 0 <= item["nutrient_density_score"] <= 100

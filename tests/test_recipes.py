@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -20,6 +21,7 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture(autouse=True)
 def setup_database():
+    """Create tables before each test and drop after."""
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
@@ -33,11 +35,11 @@ def auth_headers(client):
     client.post("/users/register", json={
         "username": "testuser",
         "email": "test@example.com",
-        "password": "password123"
+        "password": "Password123"
     })
     response = client.post("/users/login", data={
         "username": "testuser",
-        "password": "password123"
+        "password": "Password123"
     })
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
@@ -135,17 +137,17 @@ class TestUpdateRecipe:
         assert response.json()["name"] == "Updated Chicken"
 
     def test_update_recipe_not_owner(self, client, sample_recipe):
-        """Non-owner cannot update a recipe — returns 401."""
+        """Non-owner cannot update a recipe — returns 403."""
         recipe_id = sample_recipe["id"]
         # Register a second user
         client.post("/users/register", json={
             "username": "otheruser",
             "email": "other@example.com",
-            "password": "password123"
+            "password": "Password123"
         })
         login = client.post("/users/login", data={
             "username": "otheruser",
-            "password": "password123"
+            "password": "Password123"
         })
         other_token = login.json()["access_token"]
         other_headers = {"Authorization": f"Bearer {other_token}"}

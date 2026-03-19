@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -37,11 +38,11 @@ def auth_headers(client):
     client.post("/users/register", json={
         "username": "testuser",
         "email": "test@example.com",
-        "password": "password123"
+        "password": "Password123"
     })
     response = client.post("/users/login", data={
         "username": "testuser",
-        "password": "password123"
+        "password": "Password123"
     })
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
@@ -168,3 +169,44 @@ class TestDeleteIngredient:
         ingredient_id = sample_ingredient["id"]
         response = client.delete(f"/ingredients/{ingredient_id}")
         assert response.status_code == 401
+
+
+class TestPasswordValidation:
+    def test_weak_password_rejected(self, client):
+        """Password shorter than 8 characters is rejected."""
+        response = client.post("/users/register", json={
+            "username": "weakuser",
+            "email": "weak@example.com",
+            "password": "weak"
+        })
+        assert response.status_code == 400
+        assert "8 characters" in response.json()["detail"]
+
+    def test_no_uppercase_rejected(self, client):
+        """Password without uppercase letter is rejected."""
+        response = client.post("/users/register", json={
+            "username": "weakuser",
+            "email": "weak@example.com",
+            "password": "password1"
+        })
+        assert response.status_code == 400
+        assert "uppercase" in response.json()["detail"]
+
+    def test_no_digit_rejected(self, client):
+        """Password without digit is rejected."""
+        response = client.post("/users/register", json={
+            "username": "weakuser",
+            "email": "weak@example.com",
+            "password": "Password"
+        })
+        assert response.status_code == 400
+        assert "digit" in response.json()["detail"]
+
+    def test_strong_password_accepted(self, client):
+        """Strong password meeting all requirements is accepted."""
+        response = client.post("/users/register", json={
+            "username": "stronguser",
+            "email": "strong@example.com",
+            "password": "Password1"
+        })
+        assert response.status_code == 201

@@ -4,7 +4,6 @@ from sqlalchemy import text
 from typing import List, Optional
 from app.database import get_db
 from app import models
-from app.utils.nutrition_calc import compute_recipe_nutrition
 from app.utils.nutrition_calc import compute_recipe_nutrition, compute_nutrient_density_score
 
 router = APIRouter(prefix="/nutrition", tags=["Nutrition Analytics"])
