@@ -13,6 +13,9 @@ import os
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# Fix working directory to project root so database path resolves correctly
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
@@ -33,8 +36,9 @@ server = Server("nutritrack")
 
 
 def get_db() -> Session:
-    """Create a database session."""
-    return SessionLocal()
+    """Create a fresh database session for each tool call."""
+    db = SessionLocal()
+    return db
 
 
 # ─── Tool Definitions ────────────────────────────────────────────────────────
@@ -205,23 +209,26 @@ async def list_tools() -> list[Tool]:
 @server.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     """Route tool calls to the appropriate handler."""
-
-    if name == "search_ingredients":
-        return await _search_ingredients(arguments)
-    elif name == "get_top_protein_ingredients":
-        return await _get_top_protein(arguments)
-    elif name == "get_top_caffeine_ingredients":
-        return await _get_top_caffeine(arguments)
-    elif name == "check_ingredient_allergens":
-        return await _check_allergens(arguments)
-    elif name == "find_allergen_free_ingredients":
-        return await _find_allergen_free(arguments)
-    elif name == "compare_ingredients":
-        return await _compare_ingredients(arguments)
-    elif name == "analyse_recipe_nutrition":
-        return await _analyse_recipe(arguments)
-    else:
-        return [TextContent(type="text", text=f"Unknown tool: {name}")]
+    try:
+        if name == "search_ingredients":
+            return await _search_ingredients(arguments)
+        elif name == "get_top_protein_ingredients":
+            return await _get_top_protein(arguments)
+        elif name == "get_top_caffeine_ingredients":
+            return await _get_top_caffeine(arguments)
+        elif name == "check_ingredient_allergens":
+            return await _check_allergens(arguments)
+        elif name == "find_allergen_free_ingredients":
+            return await _find_allergen_free(arguments)
+        elif name == "compare_ingredients":
+            return await _compare_ingredients(arguments)
+        elif name == "analyse_recipe_nutrition":
+            return await _analyse_recipe(arguments)
+        else:
+            return [TextContent(type="text", text=f"Unknown tool: {name}")]
+    except Exception as e:
+        # Return error as text instead of crashing the server
+        return [TextContent(type="text", text=f"Tool error: {str(e)}")]
 
 
 async def _search_ingredients(args: dict) -> list[TextContent]:
