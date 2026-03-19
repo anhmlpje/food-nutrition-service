@@ -1,74 +1,75 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from typing import List, Optional
-from app.database import get_db
-from app import models, schemas
-from app.auth import get_current_user
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Table, Text, DateTime
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from app.database import Base
 
-router = APIRouter(prefix="/ingredients", tags=["Ingredients"])
+# Many-to-many association table between recipes and ingredients
+recipe_ingredients = Table(
+    "recipe_ingredients",
+    Base.metadata,
+    Column("recipe_id", Integer, ForeignKey("recipes.id"), primary_key=True),
+    Column("ingredient_id", Integer, ForeignKey("ingredients.id"), primary_key=True),
+    Column("quantity_g", Float, nullable=False)
+)
 
-@router.post("/", response_model=schemas.IngredientOut, status_code=201)
-def create_ingredient(
-    ingredient: schemas.IngredientCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    """Create a new ingredient (authenticated users only)."""
-    if db.query(models.Ingredient).filter(models.Ingredient.name == ingredient.name).first():
-        raise HTTPException(status_code=400, detail="Ingredient already exists")
-    new_ingredient = models.Ingredient(**ingredient.model_dump())
-    db.add(new_ingredient)
-    db.commit()
-    db.refresh(new_ingredient)
-    return new_ingredient
+class User(Base):
+    __tablename__ = "users"
 
-@router.get("/", response_model=List[schemas.IngredientOut])
-def get_ingredients(
-    skip: int = 0,
-    limit: int = Query(default=20, le=100),
-    search: Optional[str] = None,
-    db: Session = Depends(get_db)
-):
-    """Retrieve a paginated list of ingredients with optional search."""
-    query = db.query(models.Ingredient)
-    if search:
-        query = query.filter(models.Ingredient.name.ilike(f"%{search}%"))
-    return query.offset(skip).limit(limit).all()
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-@router.get("/{ingredient_id}", response_model=schemas.IngredientOut)
-def get_ingredient(ingredient_id: int, db: Session = Depends(get_db)):
-    """Retrieve a single ingredient by ID."""
-    ingredient = db.query(models.Ingredient).filter(models.Ingredient.id == ingredient_id).first()
-    if not ingredient:
-        raise HTTPException(status_code=404, detail="Ingredient not found")
-    return ingredient
+    recipes = relationship("Recipe", back_populates="owner")
 
-@router.put("/{ingredient_id}", response_model=schemas.IngredientOut)
-def update_ingredient(
-    ingredient_id: int,
-    updates: schemas.IngredientUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    """Update an existing ingredient (authenticated users only)."""
-    ingredient = db.query(models.Ingredient).filter(models.Ingredient.id == ingredient_id).first()
-    if not ingredient:
-        raise HTTPException(status_code=404, detail="Ingredient not found")
-    for field, value in updates.model_dump(exclude_unset=True).items():
-        setattr(ingredient, field, value)
-    db.commit()
-    db.refresh(ingredient)
-    return ingredient
+class Ingredient(Base):
+    __tablename__ = "ingredients"
 
-@router.delete("/{ingredient_id}", status_code=204)
-def delete_ingredient(
-    ingredient_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    """Delete an ingredient by ID (authenticated users only)."""
-    ingredient = db.query(models.Ingredient).filter(models.Ingredient.id == ingredient_id).first()
-    if not ingredient:
-        raise HTTPException(status_code=404, detail="Ingredient not found")
-    db.delete(ingredient)
-    db.commit()
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+    serving_size = Column(String, default="100 g")
+
+    # Core macronutrients (per 100g)
+    calories = Column(Float, default=0.0)
+    protein = Column(Float, default=0.0)
+    carbohydrate = Column(Float, default=0.0)
+    fat = Column(Float, default=0.0)
+    fiber = Column(Float, default=0.0)
+    sugars = Column(Float, default=0.0)
+
+    # Micronutrients
+    sodium = Column(Float, default=0.0)
+    calcium = Column(Float, default=0.0)
+    potassium = Column(Float, default=0.0)
+    vitamin_c = Column(Float, default=0.0)
+    vitamin_a = Column(Float, default=0.0)
+    iron = Column(Float, default=0.0)
+
+    # Special fields for advanced analytics
+    caffeine = Column(Float, default=0.0)
+    water = Column(Float, default=0.0)
+    cholesterol = Column(Float, default=0.0)
+    alcohol = Column(Float, default=0.0)
+
+    # Allergens stored as comma-separated string e.g. "gluten,dairy,nuts"
+    allergens = Column(String, default="")
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    recipes = relationship("Recipe", secondary=recipe_ingredients, back_populates="ingredients")
+
+class Recipe(Base):
+    __tablename__ = "recipes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True, nullable=False)
+    description = Column(Text, default="")
+    cuisine_type = Column(String, index=True)
+    difficulty = Column(String, default="medium")  # easy / medium / hard
+    prep_time_minutes = Column(Integer, default=0)
+    owner_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    owner = relationship("User", back_populates="recipes")
+    ingredients = relationship("Ingredient", secondary=recipe_ingredients, back_populates="recipes")
