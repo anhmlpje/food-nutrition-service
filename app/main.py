@@ -1,5 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from app.limiter import limiter
+from slowapi.errors import RateLimitExceeded
 from app.database import engine, Base
 from app.routers import users, ingredients, recipes, nutrition, allergens
 
@@ -19,8 +23,9 @@ and analysing nutritional content using a dataset of 8,700+ foods.
 - 🍽️ **Recipe builder** — Create recipes with weighted ingredients
 - 📊 **Nutrition analytics** — Macros, micronutrients, health scores
 - 🚨 **Allergen detection** — Automatic allergen tagging and filtering
-- 🤖 **AI-powered insights** — Recipe recommendations and deep health analysis via Claude AI
+- 🤖 **MCP Server** — AI assistant integration via Model Context Protocol
 - 🔐 **JWT authentication** — Secure endpoints with Bearer tokens
+- 🛡️ **Rate limiting** — Protection against abuse and brute force attacks
     """,
     version="1.0.0",
     contact={
@@ -32,7 +37,11 @@ and analysing nutritional content using a dataset of 8,700+ foods.
     }
 )
 
-# Allow cross-origin requests (useful for frontend or Postman testing)
+# Attach rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Allow cross-origin requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -47,7 +56,6 @@ app.include_router(ingredients.router)
 app.include_router(recipes.router)
 app.include_router(nutrition.router)
 app.include_router(allergens.router)
-app.include_router(ai.router)
 
 
 @app.get("/", tags=["Health Check"])
