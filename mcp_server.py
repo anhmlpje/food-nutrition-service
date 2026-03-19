@@ -201,6 +201,26 @@ async def list_tools() -> list[Tool]:
                 "required": ["recipe_name", "ingredients"]
             }
         ),
+    Tool(
+            name="get_top_nutrient_density",
+            description=(
+                "Returns the top N ingredients ranked by nutrient density score (0-100). "
+                "The score rewards high protein, fibre, vitamins and minerals, "
+                "while penalising excess sugar, sodium and cholesterol. "
+                "Based on NHS daily reference values. "
+                "Useful for identifying the most nutritionally valuable foods."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "description": "Number of top ingredients to return (default: 10)",
+                        "default": 10
+                    }
+                }
+            }
+        ),
     ]
 
 
@@ -224,6 +244,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await _compare_ingredients(arguments)
         elif name == "analyse_recipe_nutrition":
             return await _analyse_recipe(arguments)
+        elif name == "get_top_nutrient_density":
+            return await _get_top_nutrient_density(arguments)
         else:
             return [TextContent(type="text", text=f"Unknown tool: {name}")]
     except Exception as e:
@@ -447,6 +469,41 @@ async def _analyse_recipe(args: dict) -> list[TextContent]:
         return [TextContent(type="text", text="\n".join(lines))]
     finally:
         db.close()
+
+async def _get_top_nutrient_density(args: dict) -> list[TextContent]:
+    db = get_db()
+    try:
+        limit = args.get("limit", 10)
+        ingredients = db.query(models.Ingredient).all()
+
+        scored = []
+        for ing in ingredients:
+            score = compute_nutrient_density_score(ing)
+            if score > 0:
+                scored.append({
+                    "name": ing.name,
+                    "score": score,
+                    "calories": ing.calories,
+                    "protein": ing.protein,
+                    "fiber": ing.fiber,
+                    "vitamin_c": ing.vitamin_c,
+                    "iron": ing.iron,
+                })
+
+        scored.sort(key=lambda x: x["score"], reverse=True)
+        scored = scored[:limit]
+
+        lines = [f"Top {limit} ingredients by nutrient density score (0-100):\n"]
+        for i, item in enumerate(scored, 1):
+            lines.append(
+                f"{i}. {item['name']} — Score: {item['score']}/100\n"
+                f"   Calories: {item['calories']} kcal | Protein: {item['protein']}g | "
+                f"Fibre: {item['fiber']}g | Vitamin C: {item['vitamin_c']}mg | "
+                f"Iron: {item['iron']}mg\n"
+            )
+        return [TextContent(type="text", text="\n".join(lines))]
+    finally:
+        db.close()   
 
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────

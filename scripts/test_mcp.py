@@ -16,6 +16,7 @@ from mcp_server import (
     _find_allergen_free,
     _compare_ingredients,
     _analyse_recipe,
+    _get_top_nutrient_density,
 )
 
 async def run_tests():
@@ -65,6 +66,11 @@ async def run_tests():
             {"name": "whole milk", "quantity_g": 200},
         ]
     })
+    print(result[0].text)
+
+    print("\n8. TOP NUTRIENT DENSITY INGREDIENTS")
+    print("-" * 40)
+    result = await _get_top_nutrient_density({"limit": 5})
     print(result[0].text)
 
     print("\n" + "=" * 60)
