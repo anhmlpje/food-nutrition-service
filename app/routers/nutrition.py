@@ -5,6 +5,7 @@ from typing import List, Optional
 from app.database import get_db
 from app import models
 from app.utils.nutrition_calc import compute_recipe_nutrition
+from app.utils.nutrition_calc import compute_recipe_nutrition, compute_nutrient_density_score
 
 router = APIRouter(prefix="/nutrition", tags=["Nutrition Analytics"])
 
@@ -177,3 +178,39 @@ def compare_ingredients(
         "ingredient_2": {"id": ing2.id, "name": ing2.name},
         "comparison_per_100g": comparison,
     }
+
+@router.get("/top-nutrient-density")
+def top_nutrient_density(
+    limit: int = Query(default=10, le=50),
+    db: Session = Depends(get_db)
+):
+    """
+    Return the top N ingredients ranked by nutrient density score (0-100).
+    The score rewards high protein, fibre, vitamins and minerals,
+    while penalising excess sugar, sodium and cholesterol.
+    Based on NHS daily reference values.
+    """
+    ingredients = db.query(models.Ingredient).all()
+
+    scored = []
+    for ing in ingredients:
+        score = compute_nutrient_density_score(ing)
+        if score > 0:
+            scored.append({
+                "rank": 0,
+                "id": ing.id,
+                "name": ing.name,
+                "nutrient_density_score": score,
+                "calories_per_100g": ing.calories,
+                "protein_per_100g": ing.protein,
+                "fiber_per_100g": ing.fiber,
+                "vitamin_c_per_100g": ing.vitamin_c,
+                "iron_per_100g": ing.iron,
+            })
+
+    scored.sort(key=lambda x: x["nutrient_density_score"], reverse=True)
+    scored = scored[:limit]
+    for i, item in enumerate(scored):
+        item["rank"] = i + 1
+
+    return scored
