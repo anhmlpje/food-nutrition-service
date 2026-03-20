@@ -1,12 +1,22 @@
-from pydantic import BaseModel
-from typing import Optional, List
 from datetime import datetime
+from typing import List, Literal, Optional
 
-# ─── User ────────────────────────────────────────────────
+from pydantic import BaseModel, Field, field_validator
+
+
 class UserCreate(BaseModel):
-    username: str
+    username: str = Field(min_length=3, max_length=50)
     email: str
-    password: str
+    password: str = Field(min_length=1, max_length=128)
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Username cannot be blank")
+        return value
+
 
 class UserOut(BaseModel):
     id: int
@@ -16,51 +26,74 @@ class UserOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-# ─── Ingredient ──────────────────────────────────────────
+
 class IngredientCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=200)
     serving_size: Optional[str] = "100 g"
-    calories: Optional[float] = 0.0
-    protein: Optional[float] = 0.0
-    carbohydrate: Optional[float] = 0.0
-    fat: Optional[float] = 0.0
-    fiber: Optional[float] = 0.0
-    sugars: Optional[float] = 0.0
-    sodium: Optional[float] = 0.0
-    calcium: Optional[float] = 0.0
-    potassium: Optional[float] = 0.0
-    vitamin_c: Optional[float] = 0.0
-    vitamin_a: Optional[float] = 0.0
-    iron: Optional[float] = 0.0
-    caffeine: Optional[float] = 0.0
-    water: Optional[float] = 0.0
-    cholesterol: Optional[float] = 0.0
-    alcohol: Optional[float] = 0.0
-    allergens: Optional[str] = ""  # Comma-separated list of allergens, e.g. "gluten,dairy"
+    calories: Optional[float] = Field(default=0.0, ge=0)
+    protein: Optional[float] = Field(default=0.0, ge=0)
+    carbohydrate: Optional[float] = Field(default=0.0, ge=0)
+    fat: Optional[float] = Field(default=0.0, ge=0)
+    fiber: Optional[float] = Field(default=0.0, ge=0)
+    sugars: Optional[float] = Field(default=0.0, ge=0)
+    sodium: Optional[float] = Field(default=0.0, ge=0)
+    calcium: Optional[float] = Field(default=0.0, ge=0)
+    potassium: Optional[float] = Field(default=0.0, ge=0)
+    vitamin_c: Optional[float] = Field(default=0.0, ge=0)
+    vitamin_a: Optional[float] = Field(default=0.0, ge=0)
+    iron: Optional[float] = Field(default=0.0, ge=0)
+    caffeine: Optional[float] = Field(default=0.0, ge=0)
+    water: Optional[float] = Field(default=0.0, ge=0)
+    cholesterol: Optional[float] = Field(default=0.0, ge=0)
+    alcohol: Optional[float] = Field(default=0.0, ge=0)
+    allergens: Optional[str] = ""
+
+    @field_validator("name", "serving_size")
+    @classmethod
+    def validate_non_blank_text(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        value = value.strip()
+        if not value:
+            raise ValueError("Field cannot be blank")
+        return value
+
 
 class IngredientUpdate(BaseModel):
     name: Optional[str] = None
-    calories: Optional[float] = None
-    protein: Optional[float] = None
-    carbohydrate: Optional[float] = None
-    fat: Optional[float] = None
-    fiber: Optional[float] = None
-    sugars: Optional[float] = None
-    sodium: Optional[float] = None
-    calcium: Optional[float] = None
-    potassium: Optional[float] = None
-    vitamin_c: Optional[float] = None
-    vitamin_a: Optional[float] = None
-    iron: Optional[float] = None
-    caffeine: Optional[float] = None
-    water: Optional[float] = None
-    cholesterol: Optional[float] = None
-    alcohol: Optional[float] = None
-    allergens: Optional[str] = None  # Allow clearing allergens by setting to empty string
+    calories: Optional[float] = Field(default=None, ge=0)
+    protein: Optional[float] = Field(default=None, ge=0)
+    carbohydrate: Optional[float] = Field(default=None, ge=0)
+    fat: Optional[float] = Field(default=None, ge=0)
+    fiber: Optional[float] = Field(default=None, ge=0)
+    sugars: Optional[float] = Field(default=None, ge=0)
+    sodium: Optional[float] = Field(default=None, ge=0)
+    calcium: Optional[float] = Field(default=None, ge=0)
+    potassium: Optional[float] = Field(default=None, ge=0)
+    vitamin_c: Optional[float] = Field(default=None, ge=0)
+    vitamin_a: Optional[float] = Field(default=None, ge=0)
+    iron: Optional[float] = Field(default=None, ge=0)
+    caffeine: Optional[float] = Field(default=None, ge=0)
+    water: Optional[float] = Field(default=None, ge=0)
+    cholesterol: Optional[float] = Field(default=None, ge=0)
+    alcohol: Optional[float] = Field(default=None, ge=0)
+    allergens: Optional[str] = None
+
+    @field_validator("name")
+    @classmethod
+    def validate_optional_name(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        value = value.strip()
+        if not value:
+            raise ValueError("Name cannot be blank")
+        return value
+
 
 class IngredientOut(IngredientCreate):
     id: int
@@ -68,25 +101,48 @@ class IngredientOut(IngredientCreate):
 
     model_config = {"from_attributes": True}
 
-# ─── Recipe ──────────────────────────────────────────────
+
 class RecipeIngredientInput(BaseModel):
-    ingredient_id: int
-    quantity_g: float
+    ingredient_id: int = Field(gt=0)
+    quantity_g: float = Field(gt=0)
+
 
 class RecipeCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=200)
     description: Optional[str] = ""
     cuisine_type: Optional[str] = None
-    difficulty: Optional[str] = "medium"
-    prep_time_minutes: Optional[int] = 0
-    ingredients: List[RecipeIngredientInput] = []
+    difficulty: Optional[Literal["easy", "medium", "hard"]] = "medium"
+    prep_time_minutes: Optional[int] = Field(default=0, ge=0)
+    ingredients: List[RecipeIngredientInput] = Field(default_factory=list)
+
+    @field_validator("name", "description", "cuisine_type")
+    @classmethod
+    def validate_recipe_text_fields(cls, value: Optional[str], info) -> Optional[str]:
+        if value is None:
+            return value
+        value = value.strip()
+        if info.field_name == "name" and not value:
+            raise ValueError("Name cannot be blank")
+        return value
+
 
 class RecipeUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     cuisine_type: Optional[str] = None
-    difficulty: Optional[str] = None
-    prep_time_minutes: Optional[int] = None
+    difficulty: Optional[Literal["easy", "medium", "hard"]] = None
+    prep_time_minutes: Optional[int] = Field(default=None, ge=0)
+
+    @field_validator("name", "description", "cuisine_type")
+    @classmethod
+    def validate_optional_recipe_text_fields(cls, value: Optional[str], info) -> Optional[str]:
+        if value is None:
+            return value
+        value = value.strip()
+        if info.field_name == "name" and not value:
+            raise ValueError("Name cannot be blank")
+        return value
+
 
 class RecipeOut(BaseModel):
     id: int
@@ -100,7 +156,7 @@ class RecipeOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
-# ─── Nutrition Analysis ──────────────────────────────────
+
 class NutritionSummary(BaseModel):
     recipe_id: int
     recipe_name: str
@@ -110,5 +166,5 @@ class NutritionSummary(BaseModel):
     total_fat_g: float
     total_fiber_g: float
     total_sodium_mg: float
-    health_score: float  # Computed score from 0 to 100
-    warnings: List[str]  # e.g. "High sodium", "High sugar"
+    health_score: float
+    warnings: List[str]
