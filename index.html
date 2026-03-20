@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NutriTrack — Nutrition Analytics</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0e110d;
+      --surface:   #161a14;
+      --surface2:  #1e231b;
+      --border:    #2a3026;
+      --green:     #7dba6f;
+      --green-dim: #4a7a3f;
+      --gold:      #d4a843;
+      --red:       #c0513a;
+      --text:      #e8ead6;
+      --muted:     #7a8070;
+      --radius:    10px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .shell { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 0;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      padding: 0 24px 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--green);
+      letter-spacing: -0.5px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    nav { padding: 20px 12px; flex: 1; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.15s;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: var(--green-dim); color: var(--green); }
+
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .sidebar-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .api-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      word-break: break-all;
+    }
+
+    .main {
+      margin-left: 220px;
+      flex: 1;
+      padding: 40px 48px;
+      max-width: 1100px;
+    }
+
+    /* ── Page header ── */
+    .page-header { margin-bottom: 32px; }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .page-subtitle { color: var(--muted); margin-top: 6px; font-size: 14px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    /* ── Inputs ── */
+    .input-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+
+    input[type="text"], input[type="number"], select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+      border-color: var(--green-dim);
+    }
+
+    select option { background: var(--surface2); }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-primary { background: var(--green); color: #0e110d; }
+    .btn-primary:hover { background: #9dd98e; }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--green-dim); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+    th {
+      text-align: left;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+
+    .mono { font-family: 'DM Mono', monospace; font-size: 13px; }
+
+    /* ── Rank badge ── */
+    .rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .rank-1 { background: var(--gold); color: #0e110d; }
+    .rank-2 { background: #9e9e9e; color: #0e110d; }
+    .rank-3 { background: #a0522d; color: var(--text); }
+    .rank-n { background: var(--surface2); color: var(--muted); }
+
+    /* ── Score bar ── */
+    .score-bar-wrap { display: flex; align-items: center; gap: 10px; }
+    .score-bar-bg {
+      flex: 1; height: 6px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: var(--green);
+      transition: width 0.4s ease;
+    }
+    .score-num { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); width: 36px; text-align: right; }
+
+    /* ── Pills / tags ── */
+    .pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+      margin: 2px;
+    }
+    .pill-red { background: rgba(192,81,58,0.2); color: #e07060; border: 1px solid rgba(192,81,58,0.3); }
+    .pill-green { background: rgba(125,186,111,0.15); color: var(--green); border: 1px solid rgba(125,186,111,0.25); }
+    .pill-gold { background: rgba(212,168,67,0.15); color: var(--gold); border: 1px solid rgba(212,168,67,0.25); }
+    .pill-muted { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+    /* ── Nutrition grid ── */
+    .nut-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 16px; }
+
+    .nut-cell {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    .nut-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+    .nut-val { font-family: 'DM Mono', monospace; font-size: 20px; color: var(--text); margin-top: 4px; }
+    .nut-unit { font-size: 12px; color: var(--muted); }
+
+    /* ── Health score big ── */
+    .health-score-big {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 20px;
+      background: var(--surface2);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+
+    .score-circle {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+    .score-good { background: rgba(125,186,111,0.2); color: var(--green); border: 2px solid var(--green-dim); }
+    .score-mid  { background: rgba(212,168,67,0.2);  color: var(--gold); border: 2px solid rgba(212,168,67,0.4); }
+    .score-bad  { background: rgba(192,81,58,0.2);   color: var(--red); border: 2px solid rgba(192,81,58,0.4); }
+
+    .score-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Compare table ── */
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+    .compare-header {
+      font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--muted);
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+    }
+    .compare-row { display: contents; }
+    .compare-cell {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .compare-cell.label { color: var(--muted); font-size: 12px; }
+    .compare-cell.better { color: var(--green); font-family: 'DM Mono', monospace; }
+    .compare-cell.worse  { color: var(--red);   font-family: 'DM Mono', monospace; }
+    .compare-cell.same   { color: var(--text);  font-family: 'DM Mono', monospace; }
+
+    /* ── Loading / empty ── */
+    .loading { color: var(--muted); font-size: 14px; padding: 32px 0; text-align: center; }
+    .empty   { color: var(--muted); font-size: 14px; padding: 32px 0; text-align: center; font-style: italic; }
+
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Warning ── */
+    .warning-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(192,81,58,0.1);
+      border: 1px solid rgba(192,81,58,0.25);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #e07060;
+    }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+    .tab {
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { background: var(--surface2); color: var(--green); border-color: var(--border); }
+
+    /* ── Ingredient card ── */
+    .ing-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s;
+    }
+    .ing-card:hover { border-color: var(--green-dim); }
+    .ing-name { font-weight: 500; margin-bottom: 8px; }
+    .ing-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+    .ing-stat { font-size: 12px; color: var(--muted); }
+    .ing-stat span { color: var(--text); font-family: 'DM Mono', monospace; }
+
+    /* ── Error ── */
+    .error-msg {
+      background: rgba(192,81,58,0.1);
+      border: 1px solid rgba(192,81,58,0.3);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      color: #e07060;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Stats bar (home) ── */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+    }
+    .stat-val { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--green); }
+    .stat-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.8px; }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 60px; }
+      .logo-name, .logo-sub, .nav-item span, .sidebar-footer { display: none; }
+      .nav-item { justify-content: center; padding: 12px; }
+      .main { margin-left: 60px; padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-name">NutriTrack</div>
+        <div class="logo-sub">Nutrition API</div>
+      </div>
+      <nav>
+        <div v-for="item in navItems" :key="item.id"
+             class="nav-item" :class="{ active: page === item.id }"
+             @click="page = item.id">
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="api-badge">{{ apiBase }}</div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+
+      <!-- ── HOME ── -->
+      <div v-if="page === 'home'">
+        <div class="page-header">
+          <div class="page-title">Welcome to NutriTrack</div>
+          <div class="page-subtitle">Explore nutritional data across 8,789 USDA food items</div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-val">8,789</div><div class="stat-lbl">Food Items</div></div>
+          <div class="stat-box"><div class="stat-val">22</div><div class="stat-lbl">API Endpoints</div></div>
+          <div class="stat-box"><div class="stat-val">8</div><div class="stat-lbl">MCP Tools</div></div>
+          <div class="stat-box"><div class="stat-val">7</div><div class="stat-lbl">Allergens Tracked</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Quick Search</div>
+          <div class="input-row">
+            <input type="text" v-model="homeSearch" placeholder="Search an ingredient (e.g. chicken, oats, milk)..." @keyup.enter="goSearch" />
+            <button class="btn btn-primary" @click="goSearch">Search →</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">About this project</div>
+          <p style="font-size:14px; color:var(--muted); line-height:1.8;">
+            NutriTrack is a data-driven REST API built with <strong style="color:var(--text)">FastAPI</strong> and <strong style="color:var(--text)">SQLite</strong>,
+            backed by the USDA FoodData Central dataset. It provides full ingredient and recipe management,
+            nutritional analytics, allergen detection, and AI assistant integration via the
+            <strong style="color:var(--text)">Model Context Protocol (MCP)</strong>.
+          </p>
+          <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+            <span class="pill pill-green">FastAPI</span>
+            <span class="pill pill-green">SQLite</span>
+            <span class="pill pill-green">JWT Auth</span>
+            <span class="pill pill-green">MCP Server</span>
+            <span class="pill pill-green">Rate Limiting</span>
+            <span class="pill pill-gold">USDA Dataset</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SEARCH ── -->
+      <div v-if="page === 'search'">
+        <div class="page-header">
+          <div class="page-title">Ingredient Search</div>
+          <div class="page-subtitle">Search 8,789 USDA food items and explore their nutritional profiles</div>
+        </div>
+
+        <div class="card">
+          <div class="input-row">
+            <input type="text" v-model="searchQuery" placeholder="Search ingredients..." @keyup.enter="searchIngredients" />
+            <input type="number" v-model="searchLimit" min="1" max="50" style="max-width:90px;" placeholder="Limit" />
+            <button class="btn btn-primary" @click="searchIngredients" :disabled="searchLoading">
+              <span v-if="searchLoading"><span class="spinner"></span>Searching</span>
+              <span v-else">Search</span>
+            </button>
+          </div>
+          <div class="error-msg" v-if="searchError">{{ searchError }}</div>
+        </div>
+
+        <div v-if="searchResults.length">
+          <div class="ing-card" v-for="ing in searchResults" :key="ing.id">
+            <div class="ing-name">{{ ing.name }}</div>
+            <div class="ing-stats">
+              <div class="ing-stat">Calories <span>{{ ing.calories }} kcal</span></div>
+              <div class="ing-stat">Protein <span>{{ ing.protein }}g</span></div>
+              <div class="ing-stat">Carbs <span>{{ ing.carbohydrate }}g</span></div>
+              <div class="ing-stat">Fat <span>{{ ing.fat }}g</span></div>
+              <div class="ing-stat">Fibre <span>{{ ing.fiber }}g</span></div>
+              <div class="ing-stat">Sodium <span>{{ ing.sodium }}mg</span></div>
+              <div class="ing-stat" v-if="ing.caffeine > 0">Caffeine <span>{{ ing.caffeine }}mg</span></div>
+            </div>
+            <div style="margin-top:10px;" v-if="ing.allergens">
+              <span class="pill pill-red" v-for="a in ing.allergens.split(',').filter(x=>x)" :key="a">⚠ {{ a.trim() }}</span>
+            </div>
+            <div style="margin-top:6px;" v-else>
+              <span class="pill pill-green">✓ No allergens detected</span>
+            </div>
+          </div>
+        </div>
+        <div class="empty" v-else-if="!searchLoading && searchDone">No ingredients found for "{{ searchQuery }}"</div>
+      </div>
+
+      <!-- ── RANKINGS ── -->
+      <div v-if="page === 'rankings'">
+        <div class="page-header">
+          <div class="page-title">Rankings</div>
+          <div class="page-subtitle">Top ingredients by nutritional metrics</div>
+        </div>
+
+        <div class="tabs">
+          <div class="tab" :class="{active: rankTab==='protein'}" @click="rankTab='protein'; loadRankings()">🥩 Top Protein</div>
+          <div class="tab" :class="{active: rankTab==='caffeine'}" @click="rankTab='caffeine'; loadRankings()">☕ Top Caffeine</div>
+          <div class="tab" :class="{active: rankTab==='density'}" @click="rankTab='density'; loadRankings()">⭐ Nutrient Density</div>
+        </div>
+
+        <div class="card">
+          <div class="input-row" style="margin-bottom:0;">
+            <input type="number" v-model="rankLimit" min="3" max="50" style="max-width:90px;" />
+            <button class="btn btn-primary" @click="loadRankings" :disabled="rankLoading">
+              <span v-if="rankLoading"><span class="spinner"></span></span>
+              <span v-else>Update</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card" v-if="rankResults.length">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Ingredient</th>
+                  <th v-if="rankTab==='protein'">Protein / 100g</th>
+                  <th v-if="rankTab==='protein'">Calories</th>
+                  <th v-if="rankTab==='caffeine'">Caffeine / 100g</th>
+                  <th v-if="rankTab==='density'">Score</th>
+                  <th v-if="rankTab==='density'">Protein</th>
+                  <th v-if="rankTab==='density'">Fibre</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, i) in rankResults" :key="i">
+                  <td>
+                    <span class="rank" :class="i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n'">{{ i+1 }}</span>
+                  </td>
+                  <td>{{ item.name }}</td>
+                  <td v-if="rankTab==='protein'" class="mono">{{ item.protein_per_100g }}g</td>
+                  <td v-if="rankTab==='protein'" class="mono">{{ item.calories_per_100g }} kcal</td>
+                  <td v-if="rankTab==='caffeine'" class="mono">{{ item.caffeine_mg_per_100g }}mg</td>
+                  <td v-if="rankTab==='density'">
+                    <div class="score-bar-wrap">
+                      <div class="score-bar-bg"><div class="score-bar-fill" :style="{width: item.nutrient_density_score+'%'}"></div></div>
+                      <div class="score-num">{{ item.nutrient_density_score }}</div>
+                    </div>
+                  </td>
+                  <td v-if="rankTab==='density'" class="mono">{{ item.protein_per_100g }}g</td>
+                  <td v-if="rankTab==='density'" class="mono">{{ item.fiber_per_100g }}g</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="loading" v-if="rankLoading"><span class="spinner"></span>Loading rankings...</div>
+      </div>
+
+      <!-- ── COMPARE ── -->
+      <div v-if="page === 'compare'">
+        <div class="page-header">
+          <div class="page-title">Ingredient Comparison</div>
+          <div class="page-subtitle">Compare nutritional profiles of two ingredients side by side</div>
+        </div>
+
+        <div class="card">
+          <div class="input-row">
+            <input type="number" v-model="cmpId1" placeholder="Ingredient ID 1" />
+            <input type="number" v-model="cmpId2" placeholder="Ingredient ID 2" />
+            <button class="btn btn-primary" @click="compareIngredients" :disabled="cmpLoading">
+              <span v-if="cmpLoading"><span class="spinner"></span>Comparing</span>
+              <span v-else>Compare</span>
+            </button>
+          </div>
+          <div style="font-size:12px; color:var(--muted);">Tip: Use the Search tab to find ingredient IDs</div>
+          <div class="error-msg" v-if="cmpError" style="margin-top:12px;">{{ cmpError }}</div>
+        </div>
+
+        <div class="card" v-if="cmpResult">
+          <div style="display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:160px;">
+              <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Ingredient A</div>
+              <div style="font-weight:500;">{{ cmpResult.ingredient_1.name }}</div>
+            </div>
+            <div style="flex:1; min-width:160px;">
+              <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Ingredient B</div>
+              <div style="font-weight:500;">{{ cmpResult.ingredient_2.name }}</div>
+            </div>
+          </div>
+
+          <div class="compare-grid">
+            <div class="compare-header">Nutrient</div>
+            <div class="compare-header">{{ cmpResult.ingredient_1.name }}</div>
+            <div class="compare-header">{{ cmpResult.ingredient_2.name }}</div>
+
+            <template v-for="(vals, nutrient) in cmpResult.comparison_per_100g" :key="nutrient">
+              <div class="compare-cell label">{{ nutrient }}</div>
+              <div class="compare-cell" :class="getCmpClass(vals, cmpResult.ingredient_1.name, nutrient)">
+                {{ vals[cmpResult.ingredient_1.name] }}
+              </div>
+              <div class="compare-cell" :class="getCmpClass(vals, cmpResult.ingredient_2.name, nutrient)">
+                {{ vals[cmpResult.ingredient_2.name] }}
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ALLERGENS ── -->
+      <div v-if="page === 'allergens'">
+        <div class="page-header">
+          <div class="page-title">Allergen Filter</div>
+          <div class="page-subtitle">Find ingredients free from specific allergens</div>
+        </div>
+
+        <div class="card">
+          <div class="input-row">
+            <select v-model="allergenType">
+              <option value="gluten">Gluten-free</option>
+              <option value="dairy">Dairy-free</option>
+              <option value="nuts">Nut-free</option>
+              <option value="soy">Soy-free</option>
+              <option value="egg">Egg-free</option>
+              <option value="fish">Fish-free</option>
+              <option value="shellfish">Shellfish-free</option>
+            </select>
+            <input type="number" v-model="allergenLimit" min="5" max="100" style="max-width:90px;" placeholder="Limit" />
+            <button class="btn btn-primary" @click="loadAllergenFree" :disabled="allergenLoading">
+              <span v-if="allergenLoading"><span class="spinner"></span>Loading</span>
+              <span v-else">Find Ingredients</span>
+            </button>
+          </div>
+          <div class="error-msg" v-if="allergenError">{{ allergenError }}</div>
+        </div>
+
+        <div class="card" v-if="allergenResults.count !== null">
+          <div class="card-title">
+            {{ allergenResults.count }} ingredients free from <span style="color:var(--green)">{{ allergenResults.allergen_excluded }}</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ingredient</th>
+                  <th>Calories / 100g</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="ing in allergenResults.ingredients" :key="ing.id">
+                  <td>{{ ing.name }}</td>
+                  <td class="mono">{{ ing.calories }} kcal</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="loading" v-if="allergenLoading"><span class="spinner"></span>Searching...</div>
+      </div>
+
+      <!-- ── RECIPE ANALYSER ── -->
+      <div v-if="page === 'recipe'">
+        <div class="page-header">
+          <div class="page-title">Recipe Analyser</div>
+          <div class="page-subtitle">Get full nutritional breakdown and health score for any recipe</div>
+        </div>
+
+        <div class="card">
+          <div class="input-row">
+            <input type="number" v-model="recipeId" placeholder="Enter Recipe ID..." />
+            <button class="btn btn-primary" @click="analyseRecipe" :disabled="recipeLoading">
+              <span v-if="recipeLoading"><span class="spinner"></span>Analysing</span>
+              <span v-else">Analyse</span>
+            </button>
+          </div>
+          <div class="error-msg" v-if="recipeError">{{ recipeError }}</div>
+        </div>
+
+        <div v-if="recipeResult">
+          <!-- Health Score -->
+          <div class="card">
+            <div class="health-score-big">
+              <div class="score-circle"
+                   :class="recipeResult.health_score>=70?'score-good':recipeResult.health_score>=40?'score-mid':'score-bad'">
+                {{ recipeResult.health_score }}
+              </div>
+              <div>
+                <div style="font-weight:600; font-size:16px;">{{ recipeResult.recipe_name }}</div>
+                <div class="score-label">Health Score out of 100</div>
+                <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+                  <span class="pill pill-muted" v-if="recipeResult.cuisine_type">{{ recipeResult.cuisine_type }}</span>
+                  <span class="pill pill-muted" v-if="recipeResult.difficulty">{{ recipeResult.difficulty }}</span>
+                  <span class="pill pill-muted" v-if="recipeResult.prep_time_minutes">⏱ {{ recipeResult.prep_time_minutes }} min</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Warnings -->
+            <div v-if="recipeResult.warnings.length">
+              <div class="warning-item" v-for="w in recipeResult.warnings" :key="w">⚠ {{ w }}</div>
+            </div>
+
+            <!-- Allergens -->
+            <div style="margin-top:12px;" v-if="recipeResult.allergens.length">
+              <div style="font-size:12px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Allergens</div>
+              <span class="pill pill-red" v-for="a in recipeResult.allergens" :key="a">⚠ {{ a }}</span>
+            </div>
+            <div style="margin-top:12px;" v-else>
+              <span class="pill pill-green">✓ No allergens detected</span>
+            </div>
+          </div>
+
+          <!-- Nutrition breakdown -->
+          <div class="card">
+            <div class="card-title">Nutritional Breakdown</div>
+            <div class="nut-grid">
+              <div class="nut-cell">
+                <div class="nut-label">Calories</div>
+                <div class="nut-val">{{ recipeResult.nutrition.calories.toFixed(0) }}<span class="nut-unit"> kcal</span></div>
+              </div>
+              <div class="nut-cell">
+                <div class="nut-label">Protein</div>
+                <div class="nut-val">{{ recipeResult.nutrition.protein.toFixed(1) }}<span class="nut-unit">g</span></div>
+              </div>
+              <div class="nut-cell">
+                <div class="nut-label">Carbs</div>
+                <div class="nut-val">{{ recipeResult.nutrition.carbohydrate.toFixed(1) }}<span class="nut-unit">g</span></div>
+              </div>
+              <div class="nut-cell">
+                <div class="nut-label">Fat</div>
+                <div class="nut-val">{{ recipeResult.nutrition.fat.toFixed(1) }}<span class="nut-unit">g</span></div>
+              </div>
+              <div class="nut-cell">
+                <div class="nut-label">Fibre</div>
+                <div class="nut-val">{{ recipeResult.nutrition.fiber.toFixed(1) }}<span class="nut-unit">g</span></div>
+              </div>
+              <div class="nut-cell">
+                <div class="nut-label">Sugars</div>
+                <div class="nut-val">{{ recipeResult.nutrition.sugars.toFixed(1) }}<span class="nut-unit">g</span></div>
+              </div>
+              <div class="nut-cell">
+                <div class="nut-label">Sodium</div>
+                <div class="nut-val">{{ recipeResult.nutrition.sodium.toFixed(0) }}<span class="nut-unit">mg</span></div>
+              </div>
+              <div class="nut-cell">
+                <div class="nut-label">Caffeine</div>
+                <div class="nut-val">{{ recipeResult.nutrition.caffeine.toFixed(1) }}<span class="nut-unit">mg</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+const { createApp, ref, onMounted } = Vue;
+
+createApp({
+  setup() {
+    const API = 'https://nutritrack-api-1m8s.onrender.com';
+
+    const page = ref('home');
+    const navItems = [
+      { id: 'home',      icon: '⌂',  label: 'Home' },
+      { id: 'search',    icon: '⌕',  label: 'Search' },
+      { id: 'rankings',  icon: '↑',  label: 'Rankings' },
+      { id: 'compare',   icon: '⇌',  label: 'Compare' },
+      { id: 'allergens', icon: '⚠',  label: 'Allergens' },
+      { id: 'recipe',    icon: '✦',  label: 'Recipe' },
+    ];
+
+    // Home
+    const homeSearch = ref('');
+    function goSearch() {
+      searchQuery.value = homeSearch.value;
+      page.value = 'search';
+      searchIngredients();
+    }
+
+    // Search
+    const searchQuery = ref('');
+    const searchLimit = ref(10);
+    const searchResults = ref([]);
+    const searchLoading = ref(false);
+    const searchError = ref('');
+    const searchDone = ref(false);
+
+    async function searchIngredients() {
+      if (!searchQuery.value.trim()) return;
+      searchLoading.value = true;
+      searchError.value = '';
+      searchDone.value = false;
+      try {
+        const r = await fetch(`${API}/ingredients/?search=${encodeURIComponent(searchQuery.value)}&limit=${searchLimit.value}`);
+        if (!r.ok) throw new Error('Request failed');
+        searchResults.value = await r.json();
+        searchDone.value = true;
+      } catch(e) {
+        searchError.value = 'Failed to fetch ingredients. The API may be waking up — try again in a moment.';
+      } finally {
+        searchLoading.value = false;
+      }
+    }
+
+    // Rankings
+    const rankTab = ref('protein');
+    const rankLimit = ref(10);
+    const rankResults = ref([]);
+    const rankLoading = ref(false);
+
+    async function loadRankings() {
+      rankLoading.value = true;
+      rankResults.value = [];
+      try {
+        let url = '';
+        if (rankTab.value === 'protein')  url = `${API}/nutrition/top-protein?limit=${rankLimit.value}`;
+        if (rankTab.value === 'caffeine') url = `${API}/nutrition/top-caffeine?limit=${rankLimit.value}`;
+        if (rankTab.value === 'density')  url = `${API}/nutrition/top-nutrient-density?limit=${rankLimit.value}`;
+        const r = await fetch(url);
+        rankResults.value = await r.json();
+      } catch(e) {
+        console.error(e);
+      } finally {
+        rankLoading.value = false;
+      }
+    }
+
+    // Compare
+    const cmpId1 = ref('');
+    const cmpId2 = ref('');
+    const cmpResult = ref(null);
+    const cmpLoading = ref(false);
+    const cmpError = ref('');
+
+    async function compareIngredients() {
+      if (!cmpId1.value || !cmpId2.value) { cmpError.value = 'Please enter two ingredient IDs.'; return; }
+      cmpLoading.value = true;
+      cmpError.value = '';
+      cmpResult.value = null;
+      try {
+        const r = await fetch(`${API}/nutrition/compare?id1=${cmpId1.value}&id2=${cmpId2.value}`);
+        if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Not found'); }
+        cmpResult.value = await r.json();
+      } catch(e) {
+        cmpError.value = e.message;
+      } finally {
+        cmpLoading.value = false;
+      }
+    }
+
+    function getCmpClass(vals, name, nutrient) {
+      const lowerIsBetter = ['calories','fat','sugars','sodium','cholesterol'];
+      const keys = Object.keys(vals).filter(k => k !== 'difference_pct');
+      if (keys.length < 2) return 'same';
+      const [k1, k2] = keys;
+      const v = vals[name];
+      const other = vals[name === k1 ? k2 : k1];
+      if (v === other) return 'same';
+      const isBetter = lowerIsBetter.includes(nutrient) ? v < other : v > other;
+      return isBetter ? 'better' : 'worse';
+    }
+
+    // Allergens
+    const allergenType = ref('gluten');
+    const allergenLimit = ref(20);
+    const allergenResults = ref({ count: null, ingredients: [], allergen_excluded: '' });
+    const allergenLoading = ref(false);
+    const allergenError = ref('');
+
+    async function loadAllergenFree() {
+      allergenLoading.value = true;
+      allergenError.value = '';
+      try {
+        const r = await fetch(`${API}/allergens/free?exclude=${allergenType.value}&limit=${allergenLimit.value}`);
+        if (!r.ok) throw new Error('Request failed');
+        allergenResults.value = await r.json();
+      } catch(e) {
+        allergenError.value = 'Failed to fetch allergen data.';
+      } finally {
+        allergenLoading.value = false;
+      }
+    }
+
+    // Recipe
+    const recipeId = ref('');
+    const recipeResult = ref(null);
+    const recipeLoading = ref(false);
+    const recipeError = ref('');
+
+    async function analyseRecipe() {
+      if (!recipeId.value) { recipeError.value = 'Please enter a recipe ID.'; return; }
+      recipeLoading.value = true;
+      recipeError.value = '';
+      recipeResult.value = null;
+      try {
+        const r = await fetch(`${API}/nutrition/recipe/${recipeId.value}`);
+        if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Recipe not found'); }
+        recipeResult.value = await r.json();
+      } catch(e) {
+        recipeError.value = e.message;
+      } finally {
+        recipeLoading.value = false;
+      }
+    }
+
+    onMounted(() => { loadRankings(); });
+
+    return {
+      apiBase: API, page, navItems,
+      homeSearch, goSearch,
+      searchQuery, searchLimit, searchResults, searchLoading, searchError, searchDone, searchIngredients,
+      rankTab, rankLimit, rankResults, rankLoading, loadRankings,
+      cmpId1, cmpId2, cmpResult, cmpLoading, cmpError, compareIngredients, getCmpClass,
+      allergenType, allergenLimit, allergenResults, allergenLoading, allergenError, loadAllergenFree,
+      recipeId, recipeResult, recipeLoading, recipeError, analyseRecipe,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
