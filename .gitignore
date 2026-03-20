@@ -4,6 +4,8 @@
 
 # Python
 __pycache__/
+*.pyc
+*.pyd
 *.py[cod]
 *.pyo
 .pytest_cache/
