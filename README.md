@@ -35,7 +35,7 @@ A data-driven RESTful API for nutritional analysis and recipe management, built 
 ## Project Structure
 
 ```
-WEB-SERVICE-CW1/
+food-nutrition-service/
 ├── app/
 │   ├── main.py              # FastAPI entry point and router registration
 │   ├── database.py          # SQLAlchemy engine and session management
@@ -78,8 +78,8 @@ WEB-SERVICE-CW1/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/anhmlpje/food-nutrition-service.git
+cd food-nutrition-service
 ```
 
 ### 2. Create and activate environment
@@ -192,7 +192,7 @@ Add this to your Claude Desktop config file:
   "mcpServers": {
     "nutritrack": {
       "command": "C:\\path\\to\\conda\\envs\\nutritrack\\python.exe",
-      "args": ["C:\\path\\to\\WEB-SERVICE-CW1\\mcp_server.py"]
+      "args": ["C:\\path\\to\\food-nutrition-service\\mcp_server.py"]
     }
   }
 }
