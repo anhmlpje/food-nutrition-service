@@ -83,9 +83,22 @@ cd food-nutrition-service
 ```
 
 ### 2. Create and activate environment
+
+**Option A: Using Conda (recommended)**
 ```bash
 conda create -n nutritrack python=3.11
 conda activate nutritrack
+```
+
+**Option B: Using venv**
+```bash
+python -m venv nutritrack
+
+# Windows
+nutritrack\Scripts\activate
+
+# Mac/Linux
+source nutritrack/bin/activate
 ```
 
 ### 3. Install dependencies
@@ -187,16 +200,31 @@ Add this to your Claude Desktop config file:
 
 **Windows path:** `C:\Users\<username>\AppData\Local\Packages\Claude_*\LocalCache\Roaming\Claude\claude_desktop_config.json`
 
+**Option A: Using Conda**
 ```json
 {
   "mcpServers": {
     "nutritrack": {
-      "command": "C:\\path\\to\\conda\\envs\\nutritrack\\python.exe",
+      "command": "C:\\Users\\<username>\\anaconda3\\envs\\nutritrack\\python.exe",
       "args": ["C:\\path\\to\\food-nutrition-service\\mcp_server.py"]
     }
   }
 }
 ```
+
+**Option B: Using venv**
+```json
+{
+  "mcpServers": {
+    "nutritrack": {
+      "command": "C:\\path\\to\\food-nutrition-service\\nutritrack\\Scripts\\python.exe",
+      "args": ["C:\\path\\to\\food-nutrition-service\\mcp_server.py"]
+    }
+  }
+}
+```
+
+> **Note:** Add only the `mcpServers` section into your existing `claude_desktop_config.json` file. Do not overwrite the entire file as it may contain other Claude Desktop settings such as `preferences`. Replace `<username>` with your Windows username and `C:\\path\\to\\` with the actual path to your cloned repository. To find your Python executable path, run `where python` (Windows) or `which python` (Mac/Linux) with the nutritrack environment activated.
 
 ### Test MCP Tools Locally
 ```bash
