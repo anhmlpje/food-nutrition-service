@@ -459,7 +459,11 @@ const { createApp, ref, onMounted, nextTick } = Vue;
 const urlParams = new URLSearchParams(window.location.search);
 const LIVE_API  = 'https://nutritrack-api-1m8s.onrender.com';
 const LOCAL_API = 'http://127.0.0.1:8000';
-const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+// file:// = local dev, use local API
+// localhost/127.0.0.1 = local dev server, use local API  
+// anything else (GitHub Pages etc) = use live API
+const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname) 
+  || window.location.protocol === 'file:';
 const API = urlParams.get('api') || (isLocalHost ? LOCAL_API : LIVE_API);
 
 // ── Chart helpers ────────────────────────────────────────────────────────────
