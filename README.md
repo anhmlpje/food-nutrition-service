@@ -1,7 +1,7 @@
 # NutriTrack API
 
 A data-driven RESTful API for nutritional analysis and recipe management, built with FastAPI and SQLite.
-Backed by a dataset of 8,789 real food items sourced from the USDA FoodData Central database.
+It is backed by a dataset of 8,789 real food items sourced from USDA FoodData Central via Kaggle.
 
 ---
 
@@ -9,80 +9,84 @@ Backed by a dataset of 8,789 real food items sourced from the USDA FoodData Cent
 
 | Resource | URL |
 |----------|-----|
-| **Frontend Dashboard** | https://anhmlpje.github.io/food-nutrition-service/ |
-| **API Base URL** | https://nutritrack-api-1m8s.onrender.com |
-| **Swagger UI Docs** | https://nutritrack-api-1m8s.onrender.com/docs |
-| **GitHub Repository** | https://github.com/anhmlpje/food-nutrition-service |
+| Frontend Dashboard | https://anhmlpje.github.io/food-nutrition-service/ |
+| API Base URL | https://nutritrack-api-1m8s.onrender.com |
+| Swagger UI Docs | https://nutritrack-api-1m8s.onrender.com/docs |
+| GitHub Repository | https://github.com/anhmlpje/food-nutrition-service |
 
 ---
 
 ## Features
 
-- 🥦 **Ingredient Management** — Full CRUD with detailed nutritional data per 100g
-- 🍽️ **Recipe Builder** — Create recipes with weighted ingredients and automatic nutrition calculation
-- 📊 **Nutrition Analytics** — Macronutrients, micronutrients, health scores, and dietary warnings
-- 🚨 **Allergen Detection** — Automatic allergen inference engine with allergen-free filtering
-- 🤖 **MCP Server** — 8 tools exposing nutritional data directly to AI assistants via Model Context Protocol
-- 🔐 **JWT Authentication** — Secure endpoints with Bearer token authentication
-- 🛡️ **Rate Limiting** — Protection against brute force attacks (5 req/min on register, 10 req/min on login)
-- 🔑 **Password Validation** — Enforced password strength (8+ characters, uppercase letter, digit)
-- 🌐 **Vue.js Frontend** — Interactive dashboard with Chart.js visualisations, hosted on GitHub Pages
+- Ingredient Management: full CRUD with detailed nutritional data per 100g
+- Recipe Builder: create recipes with weighted ingredients and automatic nutrition calculation
+- Nutrition Analytics: macronutrients, micronutrients, health scores, warnings, and rankings
+- Allergen Detection: automatic allergen inference engine with allergen-free filtering
+- MCP Server: 8 tools exposing nutritional data to AI assistants via Model Context Protocol
+- JWT Authentication: protected endpoints using Bearer tokens
+- Rate Limiting: brute-force protection on registration and login
+- Password Validation: minimum 8 characters, at least one uppercase letter, at least one digit
+- Schema Validation: rejects invalid payloads such as negative nutrition values or invalid recipe difficulty
+- Vue.js Frontend: interactive dashboard with Chart.js visualisations hosted on GitHub Pages
 
 ---
 
 ## Tech Stack
 
 | Component | Technology | Justification |
-|-----------|-----------|---------------|
-| Framework | FastAPI | Automatic Swagger docs, async support, high performance |
-| Database | SQLite + SQLAlchemy | Zero-config, file-based, ideal for local development |
-| Authentication | JWT (python-jose) | Industry standard, stateless, scalable |
-| Password Hashing | passlib + bcrypt | Secure one-way hashing |
-| Rate Limiting | slowapi | Lightweight, FastAPI-compatible rate limiting |
-| Testing | pytest + httpx | Comprehensive test coverage with isolated test database |
-| MCP | mcp | Model Context Protocol for AI assistant integration |
-| Frontend | Vue.js 3 + Chart.js | Reactive single-page app with data visualisations |
-| API Deployment | Render | Automatic CI/CD via GitHub webhooks |
-| Frontend Hosting | GitHub Pages | Static site hosting, free and automatic |
-| Dataset | USDA FoodData Central (via Kaggle) | 8,789 real food items with 77 nutritional fields |
+|-----------|------------|---------------|
+| Framework | FastAPI | Automatic Swagger docs, clean routing, strong developer experience |
+| Database | SQLite + SQLAlchemy | Lightweight SQL persistence, good fit for local development and coursework scale |
+| Authentication | JWT (`python-jose`) | Stateless token-based authentication |
+| Password Hashing | `passlib` + `bcrypt` | Secure one-way password storage |
+| Rate Limiting | `slowapi` | Lightweight FastAPI-compatible abuse protection |
+| Testing | `pytest` + `httpx` | Automated API and smoke-test coverage |
+| MCP | `mcp` | Direct AI assistant integration |
+| Frontend | Vue.js 3 + Chart.js | Simple reactive dashboard with visual analytics |
+| API Deployment | Render | Easy hosted deployment with auto-deploy from GitHub |
+| Frontend Hosting | GitHub Pages | Free static hosting |
+| Dataset | USDA FoodData Central via Kaggle | Real-world nutritional dataset with broad coverage |
 
 ---
 
 ## Project Structure
 
-```
+```text
 food-nutrition-service/
 ├── app/
-│   ├── main.py                  # FastAPI entry point and router registration
-│   ├── database.py              # SQLAlchemy engine and session management
-│   ├── models.py                # Database models (User, Ingredient, Recipe)
-│   ├── schemas.py               # Pydantic request/response schemas
-│   ├── auth.py                  # JWT authentication logic
-│   ├── limiter.py               # Rate limiter instance (shared across routers)
+│   ├── main.py
+│   ├── database.py
+│   ├── models.py
+│   ├── schemas.py
+│   ├── auth.py
+│   ├── limiter.py
 │   ├── routers/
-│   │   ├── users.py             # User registration and login
-│   │   ├── ingredients.py       # Ingredient CRUD endpoints
-│   │   ├── recipes.py           # Recipe CRUD endpoints
-│   │   ├── nutrition.py         # Nutrition analytics endpoints
-│   │   └── allergens.py         # Allergen detection endpoints
+│   │   ├── users.py
+│   │   ├── ingredients.py
+│   │   ├── recipes.py
+│   │   ├── nutrition.py
+│   │   └── allergens.py
 │   └── utils/
-│       └── nutrition_calc.py    # Nutrition calculation, health scoring, allergen inference
+│       └── nutrition_calc.py
 ├── data/
-│   └── nutrition.csv            # USDA nutritional dataset (8,789 items)
+│   └── nutrition.csv
 ├── scripts/
-│   ├── seed_db.py               # One-time database seeding script
-│   └── test_mcp.py              # MCP server tool demonstration script
+│   ├── seed_db.py
+│   └── test_mcp.py
 ├── tests/
-│   ├── conftest.py              # Shared fixtures and rate limit reset
-│   ├── test_allergens.py        # Allergen endpoint tests (7 tests)
-│   ├── test_ingredients.py      # Ingredient CRUD and password validation tests (17 tests)
-│   ├── test_recipes.py          # Recipe CRUD and ownership permission tests (10 tests)
-│   └── test_nutrition.py        # Nutrition analytics and scoring tests (11 tests)
-├── mcp_server.py                # MCP server exposing 8 nutrition tools to AI assistants
-├── index.html                   # Vue.js frontend dashboard (served via GitHub Pages)
-├── Procfile                     # Render deployment start command
-├── runtime.txt                  # Python version specification for Render
-├── api_docs.pdf                 # API documentation exported from Swagger UI
+│   ├── conftest.py
+│   ├── test_allergens.py
+│   ├── test_auth_and_security.py
+│   ├── test_ingredients.py
+│   ├── test_mcp_smoke.py
+│   ├── test_nutrition.py
+│   ├── test_recipes.py
+│   └── test_seed_db.py
+├── mcp_server.py
+├── index.html
+├── Procfile
+├── runtime.txt
+├── api_docs.pdf
 ├── requirements.txt
 └── README.md
 ```
@@ -92,24 +96,28 @@ food-nutrition-service/
 ## Setup Instructions
 
 ### Prerequisites
+
 - Python 3.11+
-- Conda (recommended) or pip
+- Conda or `venv`
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/anhmlpje/food-nutrition-service.git
 cd food-nutrition-service
 ```
 
-### 2. Create and activate environment
+### 2. Create and activate an environment
 
-**Option A: Using Conda (recommended)**
+Conda:
+
 ```bash
 conda create -n nutritrack python=3.11
 conda activate nutritrack
 ```
 
-**Option B: Using venv**
+venv:
+
 ```bash
 python -m venv nutritrack
 
@@ -121,34 +129,51 @@ source nutritrack/bin/activate
 ```
 
 ### 3. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 4. Seed the database
+
 ```bash
 python scripts/seed_db.py
 ```
 
 Expected output:
-```
+
+```text
 Seeding database from nutrition.csv ...
   Inserted 500 ingredients...
   ...
 Done! Inserted 8789 ingredients, skipped 0.
 ```
 
-### 5. Start the server
+### 5. Start the API
+
 ```bash
 python -m uvicorn app.main:app --reload
 ```
 
-The API will be available at `http://127.0.0.1:8000`
-Swagger UI will be available at `http://127.0.0.1:8000/docs`
+The API runs at `http://127.0.0.1:8000` and Swagger UI is available at `http://127.0.0.1:8000/docs`.
+
+### Optional Environment Variables
+
+The API supports environment-based configuration for safer deployment:
+
+```bash
+set NUTRITRACK_SECRET_KEY=your-production-secret
+set APP_ENV=development
+set NUTRITRACK_TOKEN_EXPIRE_MINUTES=30
+set NUTRITRACK_ALLOWED_ORIGINS=http://127.0.0.1:8000,http://localhost:5500,https://anhmlpje.github.io
+```
+
+On Linux-based hosts such as Render, use `export` instead of `set`.
 
 ### Password Requirements
 
 When registering, passwords must:
+
 - Be at least 8 characters long
 - Contain at least one uppercase letter
 - Contain at least one digit
@@ -157,52 +182,47 @@ When registering, passwords must:
 
 ## Frontend Dashboard
 
-NutriTrack includes a Vue.js frontend dashboard hosted on GitHub Pages.
+NutriTrack includes a Vue.js frontend dashboard hosted on GitHub Pages:
 
-**Live:** https://anhmlpje.github.io/food-nutrition-service/
+https://anhmlpje.github.io/food-nutrition-service/
 
-The frontend uses smart API detection — it automatically connects to the local API
-(`http://127.0.0.1:8000`) when opened locally or from `file://`, and the live Render
-deployment when accessed via GitHub Pages. You can also override the target by appending
-`?api=http://your-url` to the URL.
+The frontend automatically connects to the local API when opened locally or from `file://`, and to the hosted Render API when accessed from GitHub Pages. You can override the backend target with `?api=http://your-url`.
 
 | Page | Features |
 |------|----------|
-| 🏠 Home | Stats overview, quick search, top protein and nutrient density charts |
-| 🔍 Search | Real-time ingredient search with calorie comparison bar chart |
-| ↑ Rankings | Protein / caffeine / nutrient density leaderboards with bar charts |
-| ⇌ Compare | Side-by-side ingredient comparison with radar chart |
-| ⚠ Allergens | Filter ingredients by allergen exclusion |
-| ✎ Builder | Register or login, build a recipe, submit via API, auto-analyse nutrition |
-| ✦ Analyser | Full nutritional breakdown with doughnut chart, bar chart and health score |
+| Home | Stats overview, quick search, top protein and nutrient density charts |
+| Search | Real-time ingredient search with calorie comparison chart |
+| Rankings | Protein, caffeine, and nutrient density leaderboards |
+| Compare | Side-by-side ingredient comparison with radar chart |
+| Allergens | Allergen exclusion filtering |
+| Builder | Login/register, build a recipe, submit via API |
+| Analyser | Full nutritional breakdown with charts and health score |
 
 ---
 
 ## Usage Examples
 
-### 1. Register and login
+### Register and login
+
 ```bash
-# Register a new account
 curl -X POST https://nutritrack-api-1m8s.onrender.com/users/register \
   -H "Content-Type: application/json" \
   -d '{"username": "john", "email": "john@example.com", "password": "Password123"}'
 
-# Login and copy the access_token from the response
 curl -X POST https://nutritrack-api-1m8s.onrender.com/users/login \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "username=john&password=Password123"
 ```
 
-### 2. Search ingredients
-```bash
-# Search for salmon-based ingredients
-curl "https://nutritrack-api-1m8s.onrender.com/ingredients/?search=salmon&limit=5"
+### Search ingredients
 
-# Get a specific ingredient by ID
+```bash
+curl "https://nutritrack-api-1m8s.onrender.com/ingredients/?search=salmon&limit=5"
 curl https://nutritrack-api-1m8s.onrender.com/ingredients/1
 ```
 
-### 3. Create a recipe
+### Create a recipe
+
 ```bash
 curl -X POST https://nutritrack-api-1m8s.onrender.com/recipes/ \
   -H "Content-Type: application/json" \
@@ -219,24 +239,18 @@ curl -X POST https://nutritrack-api-1m8s.onrender.com/recipes/ \
   }'
 ```
 
-### 4. Analyse recipe nutrition
+### Analyse recipe nutrition
+
 ```bash
-# Returns macros, health score (0-100), warnings and allergens
 curl https://nutritrack-api-1m8s.onrender.com/nutrition/recipe/1
 ```
 
-### 5. Explore analytics
+### Explore analytics
+
 ```bash
-# Top 10 high-protein ingredients
 curl "https://nutritrack-api-1m8s.onrender.com/nutrition/top-protein?limit=10"
-
-# Top ingredients by custom nutrient density score (0-100)
 curl "https://nutritrack-api-1m8s.onrender.com/nutrition/top-nutrient-density?limit=10"
-
-# Compare two ingredients side by side
 curl "https://nutritrack-api-1m8s.onrender.com/nutrition/compare?id1=2&id2=3"
-
-# Find gluten-free ingredients
 curl "https://nutritrack-api-1m8s.onrender.com/allergens/free?exclude=gluten&limit=20"
 ```
 
@@ -245,6 +259,7 @@ curl "https://nutritrack-api-1m8s.onrender.com/allergens/free?exclude=gluten&lim
 ## API Endpoints Overview
 
 ### Authentication
+
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
 | POST | `/users/register` | Register a new user (rate limited: 5/min) | No |
@@ -252,88 +267,96 @@ curl "https://nutritrack-api-1m8s.onrender.com/allergens/free?exclude=gluten&lim
 | GET | `/users/me` | Get current user profile | Yes |
 
 ### Ingredients
+
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
 | POST | `/ingredients/` | Create ingredient | Yes |
-| GET | `/ingredients/` | List ingredients (search + pagination) | No |
+| GET | `/ingredients/` | List ingredients with search and pagination | No |
 | GET | `/ingredients/{id}` | Get ingredient by ID | No |
 | PUT | `/ingredients/{id}` | Update ingredient | Yes |
 | DELETE | `/ingredients/{id}` | Delete ingredient | Yes |
 
 ### Recipes
+
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
 | POST | `/recipes/` | Create recipe with weighted ingredients | Yes |
-| GET | `/recipes/` | List recipes (filter + pagination) | No |
+| GET | `/recipes/` | List recipes with filters and pagination | No |
 | GET | `/recipes/{id}` | Get recipe by ID | No |
-| PUT | `/recipes/{id}` | Update recipe (owner only) | Yes |
+| PUT | `/recipes/{id}` | Update recipe metadata (owner only) | Yes |
 | DELETE | `/recipes/{id}` | Delete recipe (owner only) | Yes |
 
 ### Nutrition Analytics
+
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| GET | `/nutrition/recipe/{id}` | Full nutrition breakdown + health score + warnings | No |
-| GET | `/nutrition/top-protein` | Top ingredients by protein content | No |
-| GET | `/nutrition/top-caffeine` | Top ingredients by caffeine content | No |
-| GET | `/nutrition/low-calorie-recipes` | Recipes below calorie threshold | No |
+| GET | `/nutrition/recipe/{id}` | Full nutrition breakdown, score, warnings, allergens | No |
+| GET | `/nutrition/top-protein` | Top ingredients by protein | No |
+| GET | `/nutrition/top-caffeine` | Top ingredients by caffeine | No |
+| GET | `/nutrition/low-calorie-recipes` | Recipes below a calorie threshold | No |
 | GET | `/nutrition/compare` | Side-by-side ingredient comparison | No |
-| GET | `/nutrition/top-nutrient-density` | Top ingredients by nutrient density score (0-100) | No |
+| GET | `/nutrition/top-nutrient-density` | Top ingredients by nutrient density score | No |
 
 ### Allergens
+
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
 | GET | `/allergens/ingredient/{id}` | Get allergens for an ingredient | No |
-| GET | `/allergens/recipe/{id}` | Get full allergen report for a recipe | No |
+| GET | `/allergens/recipe/{id}` | Get allergen report for a recipe | No |
 | GET | `/allergens/free` | Find ingredients free from a specified allergen | No |
 
 ---
 
 ## API Documentation
 
-Interactive Swagger UI documentation is available at:
-- **Local:** `http://127.0.0.1:8000/docs`
-- **Live:** `https://nutritrack-api-1m8s.onrender.com/docs`
+Interactive Swagger documentation is available at:
 
-A PDF version of the full API documentation is included in the repository: [api_docs.pdf](./api_docs.pdf)
+- Local: `http://127.0.0.1:8000/docs`
+- Live: `https://nutritrack-api-1m8s.onrender.com/docs`
+
+A PDF export of the API documentation is included in the repository: [api_docs.pdf](./api_docs.pdf)
 
 ---
 
 ## MCP Server
 
-NutriTrack exposes an MCP (Model Context Protocol) server, allowing AI assistants such as Claude
-to directly query nutritional data in natural language without making manual REST API calls.
+NutriTrack exposes an MCP server so AI assistants can query nutritional data without manually calling the REST API.
 
-### Available Tools (8)
+### Available Tools
 
 | Tool | Description |
 |------|-------------|
-| `search_ingredients` | Search ingredients by name with full nutritional data |
-| `get_top_protein_ingredients` | Ranked list by protein content per 100g |
-| `get_top_caffeine_ingredients` | Ranked list by caffeine content per 100g |
-| `get_top_nutrient_density` | Ranked list by custom nutrient density score (0-100) |
+| `search_ingredients` | Search ingredients by name with nutritional data |
+| `get_top_protein_ingredients` | Rank ingredients by protein content |
+| `get_top_caffeine_ingredients` | Rank ingredients by caffeine content |
+| `get_top_nutrient_density` | Rank ingredients by nutrient density score |
 | `check_ingredient_allergens` | Detect allergens in a specific ingredient |
 | `find_allergen_free_ingredients` | Filter ingredients by allergen exclusion |
-| `compare_ingredients` | Side-by-side nutritional comparison of two ingredients |
-| `analyse_recipe_nutrition` | Full nutrition analysis for a custom recipe |
+| `compare_ingredients` | Compare two ingredients side by side |
+| `analyse_recipe_nutrition` | Analyse a custom recipe with quantities |
 
-### Running the MCP Server
+### Run the MCP server
+
 ```bash
 python mcp_server.py
 ```
 
-### Test all 8 MCP tools
+### Run the MCP smoke test
+
 ```bash
 python scripts/test_mcp.py
 ```
 
 ### Claude Desktop Integration
 
-Add the `mcpServers` section to your existing Claude Desktop config file:
+Add the `mcpServers` section to your existing Claude Desktop config.
 
-**Windows config path:**
+Windows config path:
+
 `C:\Users\<username>\AppData\Local\Packages\Claude_*\LocalCache\Roaming\Claude\claude_desktop_config.json`
 
-**Option A: Using Conda**
+Example:
+
 ```json
 {
   "mcpServers": {
@@ -345,24 +368,6 @@ Add the `mcpServers` section to your existing Claude Desktop config file:
 }
 ```
 
-**Option B: Using venv**
-```json
-{
-  "mcpServers": {
-    "nutritrack": {
-      "command": "C:\\path\\to\\food-nutrition-service\\nutritrack\\Scripts\\python.exe",
-      "args": ["C:\\path\\to\\food-nutrition-service\\mcp_server.py"]
-    }
-  }
-}
-```
-
-> **Note:** Add only the `mcpServers` section to your existing config file — do not overwrite
-> the entire file, as it may contain other Claude Desktop settings such as `preferences`.
-> Replace `<username>` and `C:\\path\\to\\` with your actual values.
-> Run `where python` (Windows) or `which python` (Mac/Linux) with the nutritrack
-> environment activated to find your Python executable path.
-
 ---
 
 ## Running Tests
@@ -371,76 +376,77 @@ Add the `mcpServers` section to your existing Claude Desktop config file:
 python -m pytest tests/ -v
 ```
 
-Expected output: **45 passed**
+Expected output: **59 passed**
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
-| test_allergens.py | 7 | Allergen queries, recipe allergen reports, allergen-free filtering |
-| test_ingredients.py | 17 | CRUD operations, search, pagination, password strength validation |
-| test_recipes.py | 10 | CRUD, ownership enforcement (403 on unauthorised access) |
-| test_nutrition.py | 11 | Calorie accuracy, health score range, ranking order, comparison |
+| `test_allergens.py` | 7 | Allergen queries, recipe allergen reports, allergen-free filtering |
+| `test_auth_and_security.py` | 8 | `/users/me`, invalid tokens, failed login, rate limiting, env-based security config |
+| `test_ingredients.py` | 17 | CRUD operations, search, pagination, password strength validation |
+| `test_mcp_smoke.py` | 3 | MCP tool registration, basic search execution, unknown-tool handling |
+| `test_nutrition.py` | 11 | Calorie accuracy, health score range, ranking order, comparison |
+| `test_recipes.py` | 10 | CRUD and ownership enforcement |
+| `test_seed_db.py` | 3 | Float parsing and compatibility with both `iron` and legacy `irom` CSV headers |
 
-All tests use an isolated SQLite test database and have rate limiting disabled to prevent interference.
+All tests use an isolated SQLite test database. Coverage includes CRUD behaviour, analytics correctness, authentication and rate limiting, seed import compatibility, and MCP smoke validation.
 
 ---
 
 ## Deployment
 
-### Backend — Render
+### Backend - Render
 
-NutriTrack is deployed on **Render** with automatic CI/CD via GitHub webhooks.
-Every `git push` to the `main` branch triggers a new deployment automatically.
+NutriTrack is deployed on Render with automatic GitHub-based deployment.
 
-- **Live URL:** `https://nutritrack-api-1m8s.onrender.com`
-- **Platform:** Render (Free tier)
-- **Auto-deploy:** Enabled via GitHub webhook
-- **Start command:** `python scripts/seed_db.py && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Live URL: `https://nutritrack-api-1m8s.onrender.com`
+- Platform: Render
+- Start command: `python scripts/seed_db.py && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Environment variables: `NUTRITRACK_SECRET_KEY`, `APP_ENV`, `NUTRITRACK_TOKEN_EXPIRE_MINUTES`, and optionally `NUTRITRACK_ALLOWED_ORIGINS`
 
-### Frontend — GitHub Pages
+### Frontend - GitHub Pages
 
-The Vue.js frontend is hosted on GitHub Pages directly from the `main` branch root.
-
-- **Live URL:** `https://anhmlpje.github.io/food-nutrition-service/`
-- **Platform:** GitHub Pages (free)
-- **Auto-deploy:** Every push to `main` updates the frontend automatically
+- Live URL: `https://anhmlpje.github.io/food-nutrition-service/`
+- Platform: GitHub Pages
+- Auto-deploy: every push to `main` updates the site
 
 ---
 
 ## Data Source
 
-Nutritional data sourced from the **USDA FoodData Central** database, accessed via Kaggle:
-- **Dataset:** [Nutritional Values for Common Foods and Products](https://www.kaggle.com/datasets/trolukovich/nutritional-values-for-common-foods-and-products)
-- **Size:** 8,789 food items with 77 nutritional attributes per item
-- **Values:** All expressed per 100g serving
-- **License:** Public domain, suitable for academic use
+Nutritional data comes from:
+
+- Dataset: [Nutritional Values for Common Foods and Products](https://www.kaggle.com/datasets/trolukovich/nutritional-values-for-common-foods-and-products)
+- Origin: USDA FoodData Central via Kaggle
+- Size: 8,789 items
+- Values: expressed per 100g
+- License: public domain / suitable for academic use
 
 ---
 
 ## Novel Features
 
-**Allergen Inference Engine** — Automatically detects 7 allergen categories (gluten, dairy, nuts, soy,
-egg, fish, shellfish) from ingredient names using keyword matching, without requiring a separate
-allergen dataset. Applied to all 8,789 items at import time.
+**Allergen Inference Engine**
 
-**Health Score Algorithm** — Computes a 0–100 health score per recipe based on NHS daily reference
-values. Rewards protein and fibre, penalises excess sodium, sugar and fat.
+Detects 7 allergen categories from ingredient names using keyword matching without requiring a separate allergen dataset.
 
-**Nutrient Density Score** — Custom scoring algorithm combining 6 positive nutrients (protein, fibre,
-vitamin C, calcium, potassium, iron) against 3 negative ones (sugar, sodium, cholesterol) to rank
-the most nutritionally valuable foods per calorie.
+**Health Score Algorithm**
 
-**MCP Integration** — Exposes the entire nutritional database to AI assistants via the Model Context
-Protocol, enabling natural language queries such as "find high-protein gluten-free ingredients"
-directly in Claude Desktop without any manual API calls.
+Computes a 0-100 recipe score based on NHS-style daily reference values, rewarding protein and fibre while penalising excess sodium, sugar, and fat.
 
-**Smart Frontend API Detection** — The Vue.js frontend automatically detects whether it is running
-locally (`file://` or `localhost`) or on GitHub Pages, and connects to the appropriate API endpoint.
-The target can also be overridden via `?api=` URL parameter for flexibility during development.
+**Nutrient Density Score**
+
+Ranks ingredients using a custom formula combining positive nutrients and negative nutrients to identify foods that deliver more value per calorie.
+
+**MCP Integration**
+
+Makes the dataset accessible to AI assistants through Model Context Protocol, not just through REST endpoints.
+
+**Smart Frontend API Detection**
+
+Lets the frontend switch between local and hosted APIs automatically, including support for `file://` use during development.
 
 ---
 
 ## Generative AI Declaration
 
-This project was developed with the assistance of Claude AI (Anthropic). See the technical report
-for full details of AI usage, including conversation logs and a reflective analysis of how GenAI
-was used throughout the development process.
+This project was developed with the assistance of Claude AI (Anthropic). The technical report documents the tools used, their purposes, and reflective commentary on how GenAI contributed to planning, implementation, debugging, and design exploration.
