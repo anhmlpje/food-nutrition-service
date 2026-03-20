@@ -4,113 +4,634 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NutriTrack — Nutrition Analytics</title>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #0e110d; --surface: #161a14; --surface2: #1e231b; --border: #2a3026;
-      --green: #7dba6f; --green-dim: #4a7a3f; --gold: #d4a843; --red: #c0513a;
-      --text: #e8ead6; --muted: #7a8070; --radius: 10px;
+    /* ─── Reset & Variables ─────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
+
+    :root {
+      --bg:         #0e110d;
+      --surface:    #161a14;
+      --surface2:   #1e231b;
+      --border:     #2a3026;
+      --green:      #7dba6f;
+      --green-dim:  #4a7a3f;
+      --gold:       #d4a843;
+      --red:        #c0513a;
+      --blue:       #6aa0dc;
+      --teal:       #50b4a0;
+      --text:       #e8ead6;
+      --muted:      #7a8070;
+      --radius:     10px;
+    }
+
     html { scroll-behavior: smooth; }
-    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; }
-    .shell { display: flex; min-height: 100vh; }
-    .sidebar { width: 220px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 28px 0; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
-    .logo { padding: 0 24px 28px; border-bottom: 1px solid var(--border); }
-    .logo-name { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--green); letter-spacing: -0.5px; }
-    .logo-sub { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
-    .api-indicator { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11px; }
-    .api-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s ease-in-out infinite; }
-    .api-dot.local { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    nav { padding: 20px 12px; flex: 1; }
-    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius); cursor: pointer; color: var(--muted); font-size: 14px; font-weight: 500; transition: all 0.15s; margin-bottom: 2px; }
-    .nav-item:hover { background: var(--surface2); color: var(--text); }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ─── Layout ────────────────────────────────────────────────── */
+    .shell {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+    }
+
+    .main {
+      margin-left: 220px;
+      flex: 1;
+      padding: 40px 48px;
+      max-width: 1100px;
+    }
+
+    /* ─── Sidebar ───────────────────────────────────────────────── */
+    .logo {
+      padding: 0 24px 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--green);
+      letter-spacing: -0.5px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .api-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .api-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .api-dot.local {
+      background: var(--gold);
+      box-shadow: 0 0 6px var(--gold);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    nav {
+      padding: 20px 12px;
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.15s;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover  { background: var(--surface2); color: var(--text); }
     .nav-item.active { background: var(--green-dim); color: var(--green); }
-    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
-    .sidebar-footer { padding: 16px 24px; border-top: 1px solid var(--border); }
-    .api-badge { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); word-break: break-all; }
-    .main { margin-left: 220px; flex: 1; padding: 40px 48px; max-width: 1100px; }
-    .page-header { margin-bottom: 32px; }
-    .page-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--text); letter-spacing: -0.5px; }
-    .page-subtitle { color: var(--muted); margin-top: 6px; font-size: 14px; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
-    .card-title { font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
-    .input-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-    input[type="text"], input[type="number"], select { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px 14px; outline: none; transition: border-color 0.15s; flex: 1; min-width: 140px; }
-    input:focus, select:focus { border-color: var(--green-dim); }
+    .nav-icon        { font-size: 16px; width: 20px; text-align: center; }
+
+    .sidebar-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .api-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      word-break: break-all;
+    }
+
+    /* ─── Page headers ──────────────────────────────────────────── */
+    .page-header   { margin-bottom: 32px; }
+
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+
+    .page-subtitle {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: 14px;
+    }
+
+    /* ─── Cards ─────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    /* ─── Form elements ─────────────────────────────────────────── */
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    select,
+    textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--green-dim);
+    }
+
     select option { background: var(--surface2); }
-    .btn { padding: 10px 20px; border-radius: var(--radius); border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; transition: all 0.15s; white-space: nowrap; }
+
+    textarea {
+      resize: vertical;
+      min-height: 72px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    /* ─── Buttons ───────────────────────────────────────────────── */
+    .btn {
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
     .btn-primary { background: var(--green); color: #0e110d; }
     .btn-primary:hover { background: #9dd98e; }
+
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover { border-color: var(--green-dim); }
+
+    .btn-danger {
+      background: rgba(192, 81, 58, 0.15);
+      color: #e07060;
+      border: 1px solid rgba(192, 81, 58, 0.3);
+    }
+
+    .btn-danger:hover { background: rgba(192, 81, 58, 0.25); }
+
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ─── Tables ────────────────────────────────────────────────── */
     .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th { text-align: left; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-    td { padding: 12px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th {
+      text-align: left;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--surface2); }
+    tr:hover td      { background: var(--surface2); }
+
     .mono { font-family: 'DM Mono', monospace; font-size: 13px; }
-    .rank { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; }
+
+    /* ─── Rank badges ───────────────────────────────────────────── */
+    .rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
     .rank-1 { background: var(--gold); color: #0e110d; }
-    .rank-2 { background: #9e9e9e; color: #0e110d; }
-    .rank-3 { background: #a0522d; color: var(--text); }
+    .rank-2 { background: #9e9e9e;     color: #0e110d; }
+    .rank-3 { background: #a0522d;     color: var(--text); }
     .rank-n { background: var(--surface2); color: var(--muted); }
-    .score-bar-wrap { display: flex; align-items: center; gap: 10px; }
-    .score-bar-bg { flex: 1; height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
-    .score-bar-fill { height: 100%; border-radius: 99px; background: var(--green); transition: width 0.4s ease; }
-    .score-num { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); width: 36px; text-align: right; }
-    .pill { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; margin: 2px; }
-    .pill-red    { background: rgba(192,81,58,0.2);   color: #e07060; border: 1px solid rgba(192,81,58,0.3); }
-    .pill-green  { background: rgba(125,186,111,0.15); color: var(--green); border: 1px solid rgba(125,186,111,0.25); }
-    .pill-gold   { background: rgba(212,168,67,0.15);  color: var(--gold);  border: 1px solid rgba(212,168,67,0.25); }
-    .pill-muted  { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
-    .pill-blue   { background: rgba(100,160,220,0.15); color: #7ab4e0; border: 1px solid rgba(100,160,220,0.25); }
-    .nut-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 16px; }
-    .nut-cell { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+
+    /* ─── Score bars ────────────────────────────────────────────── */
+    .score-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .score-bar-bg {
+      flex: 1;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: var(--green);
+      transition: width 0.4s ease;
+    }
+
+    .score-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      width: 36px;
+      text-align: right;
+    }
+
+    /* ─── Pills ─────────────────────────────────────────────────── */
+    .pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+      margin: 2px;
+    }
+
+    .pill-red   { background: rgba(192,81,58,0.2);   color: #e07060;       border: 1px solid rgba(192,81,58,0.3); }
+    .pill-green { background: rgba(125,186,111,0.15); color: var(--green);  border: 1px solid rgba(125,186,111,0.25); }
+    .pill-gold  { background: rgba(212,168,67,0.15);  color: var(--gold);   border: 1px solid rgba(212,168,67,0.25); }
+    .pill-muted { background: var(--surface2);        color: var(--muted);  border: 1px solid var(--border); }
+    .pill-blue  { background: rgba(100,160,220,0.15); color: #7ab4e0;       border: 1px solid rgba(100,160,220,0.25); }
+
+    /* ─── Nutrition grid ────────────────────────────────────────── */
+    .nut-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .nut-cell {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
     .nut-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
-    .nut-val { font-family: 'DM Mono', monospace; font-size: 20px; color: var(--text); margin-top: 4px; }
-    .nut-unit { font-size: 12px; color: var(--muted); }
-    .health-score-big { display: flex; align-items: center; gap: 24px; padding: 20px; background: var(--surface2); border-radius: var(--radius); margin-bottom: 16px; }
-    .score-circle { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'DM Serif Display', serif; font-size: 26px; flex-shrink: 0; }
+    .nut-val   { font-family: 'DM Mono', monospace; font-size: 20px; color: var(--text); margin-top: 4px; }
+    .nut-unit  { font-size: 12px; color: var(--muted); }
+
+    /* ─── Health score ──────────────────────────────────────────── */
+    .health-score-big {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 20px;
+      background: var(--surface2);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+
+    .score-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+
     .score-good { background: rgba(125,186,111,0.2); color: var(--green); border: 2px solid var(--green-dim); }
     .score-mid  { background: rgba(212,168,67,0.2);  color: var(--gold);  border: 2px solid rgba(212,168,67,0.4); }
     .score-bad  { background: rgba(192,81,58,0.2);   color: var(--red);   border: 2px solid rgba(192,81,58,0.4); }
     .score-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* ─── Compare grid ──────────────────────────────────────────── */
     .compare-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; }
-    .compare-header { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--border); }
-    .compare-cell { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 14px; }
+
+    .compare-header {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .compare-cell {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
     .compare-cell.label  { color: var(--muted); font-size: 12px; }
     .compare-cell.better { color: var(--green); font-family: 'DM Mono', monospace; }
     .compare-cell.worse  { color: var(--red);   font-family: 'DM Mono', monospace; }
     .compare-cell.same   { color: var(--text);  font-family: 'DM Mono', monospace; }
-    .loading { color: var(--muted); font-size: 14px; padding: 32px 0; text-align: center; }
-    .empty   { color: var(--muted); font-size: 14px; padding: 32px 0; text-align: center; font-style: italic; }
-    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: middle; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .warning-item { display: flex; align-items: flex-start; gap: 8px; padding: 10px 14px; background: rgba(192,81,58,0.1); border: 1px solid rgba(192,81,58,0.25); border-radius: var(--radius); margin-bottom: 8px; font-size: 13px; color: #e07060; }
-    .tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
-    .tab { padding: 8px 16px; border-radius: var(--radius); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted); border: 1px solid transparent; transition: all 0.15s; }
-    .tab:hover { color: var(--text); }
-    .tab.active { background: var(--surface2); color: var(--green); border-color: var(--border); }
-    .ing-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px; transition: border-color 0.15s; }
-    .ing-card:hover { border-color: var(--green-dim); }
-    .ing-name { font-weight: 500; margin-bottom: 8px; }
-    .ing-stats { display: flex; gap: 16px; flex-wrap: wrap; }
-    .ing-stat { font-size: 12px; color: var(--muted); }
-    .ing-stat span { color: var(--text); font-family: 'DM Mono', monospace; }
-    .error-msg { background: rgba(192,81,58,0.1); border: 1px solid rgba(192,81,58,0.3); border-radius: var(--radius); padding: 12px 16px; color: #e07060; font-size: 13px; margin-bottom: 16px; }
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 32px; }
-    .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; }
+
+    /* ─── Charts ────────────────────────────────────────────────── */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .chart-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .chart-title {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+    }
+
+    .chart-wrap { position: relative; height: 220px; }
+
+    /* ─── Stats row (home) ──────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+    }
+
     .stat-val { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--green); }
     .stat-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.8px; }
-    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-    .chart-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-    .chart-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
-    .chart-wrap { position: relative; height: 220px; }
-    @media (max-width: 900px) { .chart-grid { grid-template-columns: 1fr; } }
+
+    /* ─── Tabs ──────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .tab:hover  { color: var(--text); }
+    .tab.active { background: var(--surface2); color: var(--green); border-color: var(--border); }
+
+    /* ─── Ingredient cards ──────────────────────────────────────── */
+    .ing-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s;
+    }
+
+    .ing-card:hover { border-color: var(--green-dim); }
+
+    .ing-name { font-weight: 500; margin-bottom: 8px; }
+
+    .ing-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+
+    .ing-stat { font-size: 12px; color: var(--muted); }
+    .ing-stat span { color: var(--text); font-family: 'DM Mono', monospace; }
+
+    /* ─── Recipe builder ────────────────────────────────────────── */
+    .builder-ingredient-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+    }
+
+    .builder-ingredient-name { flex: 1; font-size: 14px; }
+
+    .builder-ingredient-qty {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--green);
+    }
+
+    .builder-remove {
+      cursor: pointer;
+      color: var(--red);
+      font-size: 18px;
+      line-height: 1;
+      opacity: 0.7;
+      padding: 0 4px;
+    }
+
+    .builder-remove:hover { opacity: 1; }
+
+    /* ─── Auth panel ────────────────────────────────────────────── */
+    .auth-panel {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    .token-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--green);
+      padding: 10px 14px;
+      background: rgba(125,186,111,0.1);
+      border: 1px solid rgba(125,186,111,0.25);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+
+    /* ─── Feedback messages ─────────────────────────────────────── */
+    .error-msg {
+      background: rgba(192,81,58,0.1);
+      border: 1px solid rgba(192,81,58,0.3);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      color: #e07060;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .success-msg {
+      background: rgba(125,186,111,0.1);
+      border: 1px solid rgba(125,186,111,0.25);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      color: var(--green);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .warning-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(192,81,58,0.1);
+      border: 1px solid rgba(192,81,58,0.25);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #e07060;
+    }
+
+    .loading { color: var(--muted); font-size: 14px; padding: 32px 0; text-align: center; }
+    .empty   { color: var(--muted); font-size: 14px; padding: 32px 0; text-align: center; font-style: italic; }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .chart-grid { grid-template-columns: 1fr; }
+    }
+
     @media (max-width: 768px) {
       .sidebar { width: 60px; }
       .logo-name, .logo-sub, .api-indicator, .nav-item span, .sidebar-footer { display: none; }
@@ -119,41 +640,59 @@
     }
   </style>
 </head>
+
 <body>
 <div id="app">
   <div class="shell">
+
+    <!-- ══════════════════ SIDEBAR ══════════════════ -->
     <aside class="sidebar">
       <div class="logo">
         <div class="logo-name">NutriTrack</div>
         <div class="logo-sub">Nutrition API</div>
         <div class="api-indicator">
-          <div class="api-dot" :class="{local: isLocal}"></div>
-          <span style="font-size:10px;color:var(--muted)">{{ isLocal ? 'Local API' : 'Live API' }}</span>
+          <div class="api-dot" :class="{ local: isLocal }"></div>
+          <span style="font-size:10px; color:var(--muted)">
+            {{ isLocal ? 'Local API' : 'Live API' }}
+          </span>
         </div>
       </div>
+
       <nav>
-        <div v-for="item in navItems" :key="item.id" class="nav-item" :class="{active: page===item.id}" @click="page=item.id">
+        <div
+          v-for="item in navItems"
+          :key="item.id"
+          class="nav-item"
+          :class="{ active: page === item.id }"
+          @click="page = item.id"
+        >
           <span class="nav-icon">{{ item.icon }}</span>
           <span>{{ item.label }}</span>
         </div>
       </nav>
-      <div class="sidebar-footer"><div class="api-badge">{{ API }}</div></div>
+
+      <div class="sidebar-footer">
+        <div class="api-badge">{{ API }}</div>
+      </div>
     </aside>
 
+    <!-- ══════════════════ MAIN ══════════════════════ -->
     <main class="main">
 
-      <!-- HOME -->
-      <div v-if="page==='home'">
+      <!-- ── HOME ────────────────────────────────────────────────── -->
+      <div v-if="page === 'home'">
         <div class="page-header">
           <div class="page-title">Welcome to NutriTrack</div>
           <div class="page-subtitle">Explore nutritional data across 8,789 USDA food items</div>
         </div>
+
         <div class="stats-row">
           <div class="stat-box"><div class="stat-val">8,789</div><div class="stat-lbl">Food Items</div></div>
           <div class="stat-box"><div class="stat-val">22</div><div class="stat-lbl">API Endpoints</div></div>
           <div class="stat-box"><div class="stat-val">8</div><div class="stat-lbl">MCP Tools</div></div>
           <div class="stat-box"><div class="stat-val">7</div><div class="stat-lbl">Allergens Tracked</div></div>
         </div>
+
         <div class="card">
           <div class="card-title">Quick Search</div>
           <div class="input-row">
@@ -161,6 +700,7 @@
             <button class="btn btn-primary" @click="goSearch">Search →</button>
           </div>
         </div>
+
         <div class="chart-grid">
           <div class="chart-box">
             <div class="chart-title">Top 5 by Protein (g/100g)</div>
@@ -171,29 +711,39 @@
             <div class="chart-wrap"><canvas ref="homeDensityChart"></canvas></div>
           </div>
         </div>
+
         <div class="card">
           <div class="card-title">About this project</div>
-          <p style="font-size:14px;color:var(--muted);line-height:1.8;">
-            NutriTrack is a data-driven REST API built with <strong style="color:var(--text)">FastAPI</strong> and <strong style="color:var(--text)">SQLite</strong>,
-            backed by the USDA FoodData Central dataset. It provides full ingredient and recipe management,
-            nutritional analytics, allergen detection, and AI assistant integration via the <strong style="color:var(--text)">Model Context Protocol (MCP)</strong>.
-            This frontend automatically connects to the local API when running locally, or the live Render deployment otherwise.
+          <p style="font-size:14px; color:var(--muted); line-height:1.8;">
+            NutriTrack is a data-driven REST API built with
+            <strong style="color:var(--text)">FastAPI</strong> and
+            <strong style="color:var(--text)">SQLite</strong>,
+            backed by the USDA FoodData Central dataset. It provides full ingredient and recipe
+            management, nutritional analytics, allergen detection, and AI assistant integration
+            via the <strong style="color:var(--text)">Model Context Protocol (MCP)</strong>.
+            This frontend automatically connects to the local API when running locally,
+            or the live Render deployment otherwise.
           </p>
-          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
-            <span class="pill pill-green">FastAPI</span><span class="pill pill-green">SQLite</span>
-            <span class="pill pill-green">JWT Auth</span><span class="pill pill-green">MCP Server</span>
-            <span class="pill pill-green">Rate Limiting</span><span class="pill pill-gold">USDA Dataset</span>
-            <span class="pill pill-blue">Vue.js</span><span class="pill pill-blue">Chart.js</span>
+          <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+            <span class="pill pill-green">FastAPI</span>
+            <span class="pill pill-green">SQLite</span>
+            <span class="pill pill-green">JWT Auth</span>
+            <span class="pill pill-green">MCP Server</span>
+            <span class="pill pill-green">Rate Limiting</span>
+            <span class="pill pill-gold">USDA Dataset</span>
+            <span class="pill pill-blue">Vue.js</span>
+            <span class="pill pill-blue">Chart.js</span>
           </div>
         </div>
       </div>
 
-      <!-- SEARCH -->
-      <div v-if="page==='search'">
+      <!-- ── SEARCH ───────────────────────────────────────────────── -->
+      <div v-if="page === 'search'">
         <div class="page-header">
           <div class="page-title">Ingredient Search</div>
           <div class="page-subtitle">Search 8,789 USDA food items and explore their nutritional profiles</div>
         </div>
+
         <div class="card">
           <div class="input-row">
             <input type="text" v-model="searchQuery" placeholder="Search ingredients..." @keyup.enter="searchIngredients" />
@@ -205,13 +755,18 @@
           </div>
           <div class="error-msg" v-if="searchError">{{ searchError }}</div>
         </div>
+
         <div class="chart-box" v-if="searchResults.length > 1" style="margin-bottom:20px;">
           <div class="chart-title">Calorie comparison (kcal/100g)</div>
           <div class="chart-wrap"><canvas ref="searchChart"></canvas></div>
         </div>
+
         <div v-if="searchResults.length">
           <div class="ing-card" v-for="ing in searchResults" :key="ing.id">
-            <div class="ing-name">{{ ing.name }} <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;">#{{ ing.id }}</span></div>
+            <div class="ing-name">
+              {{ ing.name }}
+              <span style="font-size:11px; color:var(--muted); font-family:'DM Mono',monospace;">#{{ ing.id }}</span>
+            </div>
             <div class="ing-stats">
               <div class="ing-stat">Calories <span>{{ ing.calories }} kcal</span></div>
               <div class="ing-stat">Protein <span>{{ ing.protein }}g</span></div>
@@ -222,25 +777,34 @@
               <div class="ing-stat" v-if="ing.caffeine > 0">Caffeine <span>{{ ing.caffeine }}mg</span></div>
             </div>
             <div style="margin-top:10px;" v-if="ing.allergens">
-              <span class="pill pill-red" v-for="a in ing.allergens.split(',').filter(x=>x)" :key="a">⚠ {{ a.trim() }}</span>
+              <span class="pill pill-red" v-for="a in ing.allergens.split(',').filter(x => x)" :key="a">
+                ⚠ {{ a.trim() }}
+              </span>
             </div>
-            <div style="margin-top:6px;" v-else><span class="pill pill-green">✓ No allergens detected</span></div>
+            <div style="margin-top:6px;" v-else>
+              <span class="pill pill-green">✓ No allergens detected</span>
+            </div>
           </div>
         </div>
-        <div class="empty" v-else-if="!searchLoading && searchDone">No ingredients found for "{{ searchQuery }}"</div>
+
+        <div class="empty" v-else-if="!searchLoading && searchDone">
+          No ingredients found for "{{ searchQuery }}"
+        </div>
       </div>
 
-      <!-- RANKINGS -->
-      <div v-if="page==='rankings'">
+      <!-- ── RANKINGS ─────────────────────────────────────────────── -->
+      <div v-if="page === 'rankings'">
         <div class="page-header">
           <div class="page-title">Rankings</div>
           <div class="page-subtitle">Top ingredients by nutritional metrics</div>
         </div>
+
         <div class="tabs">
-          <div class="tab" :class="{active:rankTab==='protein'}"  @click="rankTab='protein';  loadRankings()">🥩 Top Protein</div>
-          <div class="tab" :class="{active:rankTab==='caffeine'}" @click="rankTab='caffeine'; loadRankings()">☕ Top Caffeine</div>
-          <div class="tab" :class="{active:rankTab==='density'}"  @click="rankTab='density';  loadRankings()">⭐ Nutrient Density</div>
+          <div class="tab" :class="{ active: rankTab === 'protein' }"  @click="rankTab = 'protein';  loadRankings()">🥩 Top Protein</div>
+          <div class="tab" :class="{ active: rankTab === 'caffeine' }" @click="rankTab = 'caffeine'; loadRankings()">☕ Top Caffeine</div>
+          <div class="tab" :class="{ active: rankTab === 'density' }"  @click="rankTab = 'density';  loadRankings()">⭐ Nutrient Density</div>
         </div>
+
         <div class="card">
           <div class="input-row" style="margin-bottom:0;">
             <input type="number" v-model="rankLimit" min="3" max="50" style="max-width:90px;" />
@@ -250,53 +814,68 @@
             </button>
           </div>
         </div>
+
         <div class="chart-box" v-if="rankResults.length" style="margin-bottom:20px;">
-          <div class="chart-title">{{ rankTab==='protein' ? 'Protein g/100g' : rankTab==='caffeine' ? 'Caffeine mg/100g' : 'Nutrient Density Score' }}</div>
+          <div class="chart-title">
+            {{ rankTab === 'protein' ? 'Protein g/100g' : rankTab === 'caffeine' ? 'Caffeine mg/100g' : 'Nutrient Density Score' }}
+          </div>
           <div class="chart-wrap"><canvas ref="rankChart"></canvas></div>
         </div>
+
         <div class="card" v-if="rankResults.length">
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>#</th><th>Ingredient</th>
-                  <th v-if="rankTab==='protein'">Protein / 100g</th>
-                  <th v-if="rankTab==='protein'">Calories</th>
-                  <th v-if="rankTab==='caffeine'">Caffeine / 100g</th>
-                  <th v-if="rankTab==='density'">Score</th>
-                  <th v-if="rankTab==='density'">Protein</th>
-                  <th v-if="rankTab==='density'">Fibre</th>
+                  <th>#</th>
+                  <th>Ingredient</th>
+                  <th v-if="rankTab === 'protein'">Protein / 100g</th>
+                  <th v-if="rankTab === 'protein'">Calories</th>
+                  <th v-if="rankTab === 'caffeine'">Caffeine / 100g</th>
+                  <th v-if="rankTab === 'density'">Score</th>
+                  <th v-if="rankTab === 'density'">Protein</th>
+                  <th v-if="rankTab === 'density'">Fibre</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(item,i) in rankResults" :key="i">
-                  <td><span class="rank" :class="i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n'">{{ i+1 }}</span></td>
+                <tr v-for="(item, i) in rankResults" :key="i">
+                  <td>
+                    <span class="rank" :class="i===0 ? 'rank-1' : i===1 ? 'rank-2' : i===2 ? 'rank-3' : 'rank-n'">
+                      {{ i + 1 }}
+                    </span>
+                  </td>
                   <td>{{ item.name }}</td>
-                  <td v-if="rankTab==='protein'"  class="mono">{{ item.protein_per_100g }}g</td>
-                  <td v-if="rankTab==='protein'"  class="mono">{{ item.calories_per_100g }} kcal</td>
-                  <td v-if="rankTab==='caffeine'" class="mono">{{ item.caffeine_mg_per_100g }}mg</td>
-                  <td v-if="rankTab==='density'">
+                  <td v-if="rankTab === 'protein'"  class="mono">{{ item.protein_per_100g }}g</td>
+                  <td v-if="rankTab === 'protein'"  class="mono">{{ item.calories_per_100g }} kcal</td>
+                  <td v-if="rankTab === 'caffeine'" class="mono">{{ item.caffeine_mg_per_100g }}mg</td>
+                  <td v-if="rankTab === 'density'">
                     <div class="score-bar-wrap">
-                      <div class="score-bar-bg"><div class="score-bar-fill" :style="{width:item.nutrient_density_score+'%'}"></div></div>
+                      <div class="score-bar-bg">
+                        <div class="score-bar-fill" :style="{ width: item.nutrient_density_score + '%' }"></div>
+                      </div>
                       <div class="score-num">{{ item.nutrient_density_score }}</div>
                     </div>
                   </td>
-                  <td v-if="rankTab==='density'" class="mono">{{ item.protein_per_100g }}g</td>
-                  <td v-if="rankTab==='density'" class="mono">{{ item.fiber_per_100g }}g</td>
+                  <td v-if="rankTab === 'density'" class="mono">{{ item.protein_per_100g }}g</td>
+                  <td v-if="rankTab === 'density'" class="mono">{{ item.fiber_per_100g }}g</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-        <div class="loading" v-if="rankLoading"><span class="spinner"></span>Loading rankings...</div>
+
+        <div class="loading" v-if="rankLoading">
+          <span class="spinner"></span>Loading rankings...
+        </div>
       </div>
 
-      <!-- COMPARE -->
-      <div v-if="page==='compare'">
+      <!-- ── COMPARE ──────────────────────────────────────────────── -->
+      <div v-if="page === 'compare'">
         <div class="page-header">
           <div class="page-title">Ingredient Comparison</div>
           <div class="page-subtitle">Compare nutritional profiles of two ingredients side by side</div>
         </div>
+
         <div class="card">
           <div class="input-row">
             <input type="number" v-model="cmpId1" placeholder="Ingredient ID 1" />
@@ -306,45 +885,56 @@
               <span v-else>Compare</span>
             </button>
           </div>
-          <div style="font-size:12px;color:var(--muted);">Tip: Use the Search tab to find ingredient IDs (shown after the name)</div>
+          <div style="font-size:12px; color:var(--muted);">
+            Tip: Use the Search tab to find ingredient IDs (shown after the ingredient name)
+          </div>
           <div class="error-msg" v-if="cmpError" style="margin-top:12px;">{{ cmpError }}</div>
         </div>
+
         <div v-if="cmpResult">
           <div class="chart-box" style="margin-bottom:20px;">
             <div class="chart-title">Nutritional radar comparison</div>
             <div class="chart-wrap" style="height:280px;"><canvas ref="compareChart"></canvas></div>
           </div>
+
           <div class="card">
-            <div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
-              <div style="flex:1;min-width:160px;">
-                <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Ingredient A</div>
+            <div style="display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
+              <div style="flex:1; min-width:160px;">
+                <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Ingredient A</div>
                 <div style="font-weight:500;">{{ cmpResult.ingredient_1.name }}</div>
               </div>
-              <div style="flex:1;min-width:160px;">
-                <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Ingredient B</div>
+              <div style="flex:1; min-width:160px;">
+                <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Ingredient B</div>
                 <div style="font-weight:500;">{{ cmpResult.ingredient_2.name }}</div>
               </div>
             </div>
+
             <div class="compare-grid">
               <div class="compare-header">Nutrient</div>
               <div class="compare-header">{{ cmpResult.ingredient_1.name }}</div>
               <div class="compare-header">{{ cmpResult.ingredient_2.name }}</div>
-              <template v-for="(vals,nutrient) in cmpResult.comparison_per_100g" :key="nutrient">
+
+              <template v-for="(vals, nutrient) in cmpResult.comparison_per_100g" :key="nutrient">
                 <div class="compare-cell label">{{ nutrient }}</div>
-                <div class="compare-cell" :class="getCmpClass(vals,cmpResult.ingredient_1.name,nutrient)">{{ vals[cmpResult.ingredient_1.name] }}</div>
-                <div class="compare-cell" :class="getCmpClass(vals,cmpResult.ingredient_2.name,nutrient)">{{ vals[cmpResult.ingredient_2.name] }}</div>
+                <div class="compare-cell" :class="getCmpClass(vals, cmpResult.ingredient_1.name, nutrient)">
+                  {{ vals[cmpResult.ingredient_1.name] }}
+                </div>
+                <div class="compare-cell" :class="getCmpClass(vals, cmpResult.ingredient_2.name, nutrient)">
+                  {{ vals[cmpResult.ingredient_2.name] }}
+                </div>
               </template>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ALLERGENS -->
-      <div v-if="page==='allergens'">
+      <!-- ── ALLERGENS ─────────────────────────────────────────────── -->
+      <div v-if="page === 'allergens'">
         <div class="page-header">
           <div class="page-title">Allergen Filter</div>
           <div class="page-subtitle">Find ingredients free from specific allergens</div>
         </div>
+
         <div class="card">
           <div class="input-row">
             <select v-model="allergenType">
@@ -364,11 +954,20 @@
           </div>
           <div class="error-msg" v-if="allergenError">{{ allergenError }}</div>
         </div>
+
         <div class="card" v-if="allergenResults.count !== null">
-          <div class="card-title">{{ allergenResults.count }} ingredients free from <span style="color:var(--green)">{{ allergenResults.allergen_excluded }}</span></div>
+          <div class="card-title">
+            {{ allergenResults.count }} ingredients free from
+            <span style="color:var(--green)">{{ allergenResults.allergen_excluded }}</span>
+          </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Ingredient</th><th>Calories / 100g</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Ingredient</th>
+                  <th>Calories / 100g</th>
+                </tr>
+              </thead>
               <tbody>
                 <tr v-for="ing in allergenResults.ingredients" :key="ing.id">
                   <td>{{ ing.name }}</td>
@@ -378,15 +977,159 @@
             </table>
           </div>
         </div>
-        <div class="loading" v-if="allergenLoading"><span class="spinner"></span>Searching...</div>
+
+        <div class="loading" v-if="allergenLoading">
+          <span class="spinner"></span>Searching...
+        </div>
       </div>
 
-      <!-- RECIPE ANALYSER -->
-      <div v-if="page==='recipe'">
+      <!-- ── RECIPE BUILDER ────────────────────────────────────────── -->
+      <div v-if="page === 'builder'">
+        <div class="page-header">
+          <div class="page-title">Recipe Builder</div>
+          <div class="page-subtitle">Build a recipe, create it via the API, and instantly analyse its nutrition</div>
+        </div>
+
+        <!-- Step 1: Login -->
+        <div class="card">
+          <div class="card-title">Step 1 — Authenticate</div>
+
+          <div class="token-indicator" v-if="builderToken">
+            ✓ Logged in as <strong style="margin-left:4px;">{{ builderUsername }}</strong>
+            <button class="btn btn-ghost" style="margin-left:auto; padding:4px 12px; font-size:12px;" @click="builderToken = ''; builderUsername = ''">Logout</button>
+          </div>
+
+          <div v-if="!builderToken">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+              <div class="field">
+                <label>Username</label>
+                <input type="text" v-model="builderLoginUser" placeholder="Enter username" />
+              </div>
+              <div class="field">
+                <label>Password</label>
+                <input type="password" v-model="builderLoginPass" placeholder="Enter password" @keyup.enter="builderLogin" />
+              </div>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="btn btn-primary" @click="builderLogin" :disabled="builderAuthLoading">
+                <span v-if="builderAuthLoading"><span class="spinner"></span>Logging in</span>
+                <span v-else>Login</span>
+              </button>
+              <button class="btn btn-ghost" @click="builderRegister" :disabled="builderAuthLoading">Register new account</button>
+            </div>
+            <div class="error-msg"   v-if="builderAuthError"   style="margin-top:12px;">{{ builderAuthError }}</div>
+            <div class="success-msg" v-if="builderAuthSuccess" style="margin-top:12px;">{{ builderAuthSuccess }}</div>
+          </div>
+        </div>
+
+        <!-- Step 2: Recipe details -->
+        <div class="card" v-if="builderToken">
+          <div class="card-title">Step 2 — Recipe Details</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="field" style="grid-column:1/-1;">
+              <label>Recipe Name *</label>
+              <input type="text" v-model="builderName" placeholder="e.g. Grilled Salmon with Spinach" />
+            </div>
+            <div class="field">
+              <label>Cuisine Type</label>
+              <input type="text" v-model="builderCuisine" placeholder="e.g. Mediterranean" />
+            </div>
+            <div class="field">
+              <label>Difficulty</label>
+              <select v-model="builderDifficulty">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Prep Time (minutes)</label>
+              <input type="number" v-model="builderPrepTime" min="0" placeholder="20" />
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+              <label>Description</label>
+              <textarea v-model="builderDescription" placeholder="Brief description of the recipe..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Add ingredients -->
+        <div class="card" v-if="builderToken">
+          <div class="card-title">Step 3 — Add Ingredients</div>
+
+          <div class="input-row">
+            <input type="text" v-model="builderIngSearch" placeholder="Search ingredient to add..." @keyup.enter="builderSearchIngredients" />
+            <button class="btn btn-ghost" @click="builderSearchIngredients" :disabled="builderIngLoading">
+              <span v-if="builderIngLoading"><span class="spinner"></span></span>
+              <span v-else>Search</span>
+            </button>
+          </div>
+
+          <!-- Search results to add -->
+          <div v-if="builderIngResults.length" style="margin-bottom:16px;">
+            <div
+              v-for="ing in builderIngResults"
+              :key="ing.id"
+              style="display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:6px;"
+            >
+              <div style="flex:1; font-size:14px;">
+                {{ ing.name }}
+                <span style="font-size:11px; color:var(--muted);">{{ ing.calories }} kcal/100g</span>
+              </div>
+              <input
+                type="number"
+                v-model="ing._qty"
+                min="1"
+                max="2000"
+                placeholder="g"
+                style="width:80px; flex:none;"
+              />
+              <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" @click="addToRecipe(ing)">
+                + Add
+              </button>
+            </div>
+          </div>
+
+          <!-- Current recipe ingredient list -->
+          <div v-if="builderIngredients.length">
+            <div style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">
+              Recipe Ingredients ({{ builderIngredients.length }})
+            </div>
+            <div class="builder-ingredient-item" v-for="(item, i) in builderIngredients" :key="i">
+              <div class="builder-ingredient-name">{{ item.name }}</div>
+              <div class="builder-ingredient-qty">{{ item.quantity_g }}g</div>
+              <span class="builder-remove" @click="builderIngredients.splice(i, 1)">×</span>
+            </div>
+          </div>
+          <div class="empty" v-else>No ingredients added yet</div>
+        </div>
+
+        <!-- Step 4: Create -->
+        <div class="card" v-if="builderToken">
+          <div class="card-title">Step 4 — Create &amp; Analyse</div>
+
+          <div class="error-msg"   v-if="builderCreateError">{{ builderCreateError }}</div>
+          <div class="success-msg" v-if="builderCreateSuccess">{{ builderCreateSuccess }}</div>
+
+          <button
+            class="btn btn-primary"
+            @click="createRecipe"
+            :disabled="builderCreateLoading || !builderName || builderIngredients.length === 0"
+            style="width:100%; padding:14px;"
+          >
+            <span v-if="builderCreateLoading"><span class="spinner"></span>Creating recipe...</span>
+            <span v-else>Create Recipe &amp; Analyse Nutrition →</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── RECIPE ANALYSER ─────────────────────────────────────── -->
+      <div v-if="page === 'recipe'">
         <div class="page-header">
           <div class="page-title">Recipe Analyser</div>
-          <div class="page-subtitle">Get full nutritional breakdown and health score for any recipe</div>
+          <div class="page-subtitle">Get full nutritional breakdown and health score for any recipe by ID</div>
         </div>
+
         <div class="card">
           <div class="input-row">
             <input type="number" v-model="recipeId" placeholder="Enter Recipe ID..." />
@@ -395,33 +1138,43 @@
               <span v-else>Analyse</span>
             </button>
           </div>
+          <div style="font-size:12px; color:var(--muted);">
+            Don't have a recipe ID? Use the <span style="color:var(--green); cursor:pointer;" @click="page='builder'">Recipe Builder</span> to create one.
+          </div>
           <div class="error-msg" v-if="recipeError">{{ recipeError }}</div>
         </div>
+
         <div v-if="recipeResult">
           <div class="card">
             <div class="health-score-big">
-              <div class="score-circle" :class="recipeResult.health_score>=70?'score-good':recipeResult.health_score>=40?'score-mid':'score-bad'">
+              <div class="score-circle"
+                :class="recipeResult.health_score >= 70 ? 'score-good' : recipeResult.health_score >= 40 ? 'score-mid' : 'score-bad'">
                 {{ recipeResult.health_score }}
               </div>
               <div>
-                <div style="font-weight:600;font-size:16px;">{{ recipeResult.recipe_name }}</div>
+                <div style="font-weight:600; font-size:16px;">{{ recipeResult.recipe_name }}</div>
                 <div class="score-label">Health Score out of 100</div>
-                <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+                <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
                   <span class="pill pill-muted" v-if="recipeResult.cuisine_type">{{ recipeResult.cuisine_type }}</span>
                   <span class="pill pill-muted" v-if="recipeResult.difficulty">{{ recipeResult.difficulty }}</span>
                   <span class="pill pill-muted" v-if="recipeResult.prep_time_minutes">⏱ {{ recipeResult.prep_time_minutes }} min</span>
                 </div>
               </div>
             </div>
+
             <div v-if="recipeResult.warnings.length">
               <div class="warning-item" v-for="w in recipeResult.warnings" :key="w">⚠ {{ w }}</div>
             </div>
+
             <div style="margin-top:12px;" v-if="recipeResult.allergens.length">
-              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Allergens</div>
+              <div style="font-size:12px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Allergens</div>
               <span class="pill pill-red" v-for="a in recipeResult.allergens" :key="a">⚠ {{ a }}</span>
             </div>
-            <div style="margin-top:12px;" v-else><span class="pill pill-green">✓ No allergens detected</span></div>
+            <div style="margin-top:12px;" v-else>
+              <span class="pill pill-green">✓ No allergens detected</span>
+            </div>
           </div>
+
           <div class="chart-grid">
             <div class="chart-box">
               <div class="chart-title">Macronutrient Distribution</div>
@@ -432,6 +1185,7 @@
               <div class="chart-wrap"><canvas ref="recipeBarChart"></canvas></div>
             </div>
           </div>
+
           <div class="card">
             <div class="card-title">Full Nutritional Breakdown</div>
             <div class="nut-grid">
@@ -456,26 +1210,48 @@
 const { createApp, ref, onMounted, nextTick } = Vue;
 
 // ── Smart API detection ──────────────────────────────────────────────────────
-const urlParams = new URLSearchParams(window.location.search);
-const LIVE_API  = 'https://nutritrack-api-1m8s.onrender.com';
-const LOCAL_API = 'http://127.0.0.1:8000';
-// file:// = local dev, use local API
-// localhost/127.0.0.1 = local dev server, use local API  
-// anything else (GitHub Pages etc) = use live API
-const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname) 
-  || window.location.protocol === 'file:';
-const API = urlParams.get('api') || (isLocalHost ? LOCAL_API : LIVE_API);
+const urlParams   = new URLSearchParams(window.location.search);
+const LIVE_API    = 'https://nutritrack-api-1m8s.onrender.com';
+const LOCAL_API   = 'http://127.0.0.1:8000';
+const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+                    || window.location.protocol === 'file:';
+const API         = urlParams.get('api') || (isLocalHost ? LOCAL_API : LIVE_API);
 
-// ── Chart helpers ────────────────────────────────────────────────────────────
-const C = { green:'rgba(125,186,111,0.85)', gold:'rgba(212,168,67,0.85)', red:'rgba(192,81,58,0.85)', blue:'rgba(100,160,220,0.85)', teal:'rgba(80,180,160,0.85)' };
-const baseOpts = { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#7a8070', font:{family:'DM Sans',size:12} } } } };
+// ── Chart colour palette ─────────────────────────────────────────────────────
+const C = {
+  green:  'rgba(125,186,111,0.85)',
+  gold:   'rgba(212,168,67,0.85)',
+  red:    'rgba(192,81,58,0.85)',
+  blue:   'rgba(100,160,220,0.85)',
+  teal:   'rgba(80,180,160,0.85)',
+};
+
+const BASE_OPTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      labels: { color: '#7a8070', font: { family: 'DM Sans', size: 12 } }
+    }
+  }
+};
 
 function mkBar(canvas, labels, data, label, color) {
   if (!canvas) return null;
   return new Chart(canvas.getContext('2d'), {
     type: 'bar',
-    data: { labels, datasets:[{ label, data, backgroundColor:color, borderRadius:6, borderSkipped:false }] },
-    options: { ...baseOpts, indexAxis:'y', scales:{ x:{ticks:{color:'#7a8070'},grid:{color:'#2a3026'}}, y:{ticks:{color:'#e8ead6',font:{size:11}},grid:{display:false}} } },
+    data: {
+      labels,
+      datasets: [{ label, data, backgroundColor: color, borderRadius: 6, borderSkipped: false }]
+    },
+    options: {
+      ...BASE_OPTS,
+      indexAxis: 'y',
+      scales: {
+        x: { ticks: { color: '#7a8070' }, grid: { color: '#2a3026' } },
+        y: { ticks: { color: '#e8ead6', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
   });
 }
 
@@ -483,8 +1259,20 @@ function mkPie(canvas, labels, data, colors) {
   if (!canvas) return null;
   return new Chart(canvas.getContext('2d'), {
     type: 'doughnut',
-    data: { labels, datasets:[{ data, backgroundColor:colors, borderWidth:0, hoverOffset:6 }] },
-    options: { ...baseOpts, cutout:'60%', plugins:{ legend:{ position:'bottom', labels:{color:'#7a8070',padding:16,font:{size:12}} } } },
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }]
+    },
+    options: {
+      ...BASE_OPTS,
+      cutout: '60%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#7a8070', padding: 16, font: { size: 12 } }
+        }
+      }
+    }
   });
 }
 
@@ -493,30 +1281,45 @@ function mkRadar(canvas, labels, datasets) {
   return new Chart(canvas.getContext('2d'), {
     type: 'radar',
     data: { labels, datasets },
-    options: { ...baseOpts, scales:{ r:{ ticks:{color:'#7a8070',backdropColor:'transparent',font:{size:10}}, grid:{color:'#2a3026'}, angleLines:{color:'#2a3026'}, pointLabels:{color:'#7a8070',font:{size:11}} } } },
+    options: {
+      ...BASE_OPTS,
+      scales: {
+        r: {
+          ticks: { color: '#7a8070', backdropColor: 'transparent', font: { size: 10 } },
+          grid: { color: '#2a3026' },
+          angleLines: { color: '#2a3026' },
+          pointLabels: { color: '#7a8070', font: { size: 11 } }
+        }
+      }
+    }
   });
 }
 
 const charts = {};
-function destroy(key) { if (charts[key]) { charts[key].destroy(); delete charts[key]; } }
-function trim(s, n=25) { return s.length > n ? s.slice(0,n)+'…' : s; }
+function destroyChart(key) {
+  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+}
+function trim(s, n = 25) {
+  return s.length > n ? s.slice(0, n) + '…' : s;
+}
 
-// ── App ──────────────────────────────────────────────────────────────────────
+// ── Vue App ──────────────────────────────────────────────────────────────────
 createApp({
   setup() {
     const page    = ref('home');
     const isLocal = isLocalHost;
 
     const navItems = [
-      {id:'home',      icon:'⌂', label:'Home'},
-      {id:'search',    icon:'⌕', label:'Search'},
-      {id:'rankings',  icon:'↑', label:'Rankings'},
-      {id:'compare',   icon:'⇌', label:'Compare'},
-      {id:'allergens', icon:'⚠', label:'Allergens'},
-      {id:'recipe',    icon:'✦', label:'Recipe'},
+      { id: 'home',      icon: '⌂', label: 'Home' },
+      { id: 'search',    icon: '⌕', label: 'Search' },
+      { id: 'rankings',  icon: '↑', label: 'Rankings' },
+      { id: 'compare',   icon: '⇌', label: 'Compare' },
+      { id: 'allergens', icon: '⚠', label: 'Allergens' },
+      { id: 'builder',   icon: '✎', label: 'Builder' },
+      { id: 'recipe',    icon: '✦', label: 'Analyser' },
     ];
 
-    // chart refs
+    // ── Chart canvas refs ──
     const homeProteinChart = ref(null);
     const homeDensityChart = ref(null);
     const searchChart      = ref(null);
@@ -525,24 +1328,42 @@ createApp({
     const recipePieChart   = ref(null);
     const recipeBarChart   = ref(null);
 
-    // ── Home ──
+    // ── Home ──────────────────────────────────────────────────────────────────
     const homeSearch = ref('');
-    function goSearch() { searchQuery.value = homeSearch.value; page.value = 'search'; searchIngredients(); }
+
+    function goSearch() {
+      searchQuery.value = homeSearch.value;
+      page.value = 'search';
+      searchIngredients();
+    }
 
     async function loadHomeCharts() {
       try {
-        const [p, d] = await Promise.all([
-          fetch(`${API}/nutrition/top-protein?limit=5`).then(r=>r.json()),
-          fetch(`${API}/nutrition/top-nutrient-density?limit=5`).then(r=>r.json()),
+        const [proteinData, densityData] = await Promise.all([
+          fetch(`${API}/nutrition/top-protein?limit=5`).then(r => r.json()),
+          fetch(`${API}/nutrition/top-nutrient-density?limit=5`).then(r => r.json()),
         ]);
         await nextTick();
-        destroy('homeProtein'); destroy('homeDensity');
-        charts.homeProtein = mkBar(homeProteinChart.value, p.map(i=>trim(i.name)), p.map(i=>i.protein_per_100g), 'g/100g', C.green);
-        charts.homeDensity = mkBar(homeDensityChart.value, d.map(i=>trim(i.name)), d.map(i=>i.nutrient_density_score), 'score', C.gold);
-      } catch(e) { console.error(e); }
+        destroyChart('homeProtein');
+        destroyChart('homeDensity');
+        charts.homeProtein = mkBar(
+          homeProteinChart.value,
+          proteinData.map(i => trim(i.name)),
+          proteinData.map(i => i.protein_per_100g),
+          'g/100g', C.green
+        );
+        charts.homeDensity = mkBar(
+          homeDensityChart.value,
+          densityData.map(i => trim(i.name)),
+          densityData.map(i => i.nutrient_density_score),
+          'score', C.gold
+        );
+      } catch (e) {
+        console.error('Failed to load home charts:', e);
+      }
     }
 
-    // ── Search ──
+    // ── Search ────────────────────────────────────────────────────────────────
     const searchQuery   = ref('');
     const searchLimit   = ref(10);
     const searchResults = ref([]);
@@ -552,43 +1373,66 @@ createApp({
 
     async function searchIngredients() {
       if (!searchQuery.value.trim()) return;
-      searchLoading.value = true; searchError.value = ''; searchDone.value = false;
+      searchLoading.value = true;
+      searchError.value   = '';
+      searchDone.value    = false;
       try {
-        const r = await fetch(`${API}/ingredients/?search=${encodeURIComponent(searchQuery.value)}&limit=${searchLimit.value}`);
-        if (!r.ok) throw new Error();
-        searchResults.value = await r.json(); searchDone.value = true;
+        const res = await fetch(`${API}/ingredients/?search=${encodeURIComponent(searchQuery.value)}&limit=${searchLimit.value}`);
+        if (!res.ok) throw new Error('Request failed');
+        searchResults.value = await res.json();
+        searchDone.value = true;
         await nextTick();
         if (searchResults.value.length > 1) {
-          destroy('search');
-          charts.search = mkBar(searchChart.value, searchResults.value.map(i=>trim(i.name,20)), searchResults.value.map(i=>i.calories), 'kcal/100g', C.blue);
+          destroyChart('search');
+          charts.search = mkBar(
+            searchChart.value,
+            searchResults.value.map(i => trim(i.name, 20)),
+            searchResults.value.map(i => i.calories),
+            'kcal/100g', C.blue
+          );
         }
-      } catch(e) { searchError.value = 'Failed to fetch. The API may be waking up — try again in a moment.'; }
-      finally { searchLoading.value = false; }
+      } catch (e) {
+        searchError.value = 'Failed to fetch. The API may be waking up — try again in a moment.';
+      } finally {
+        searchLoading.value = false;
+      }
     }
 
-    // ── Rankings ──
+    // ── Rankings ──────────────────────────────────────────────────────────────
     const rankTab     = ref('protein');
     const rankLimit   = ref(10);
     const rankResults = ref([]);
     const rankLoading = ref(false);
 
     async function loadRankings() {
-      rankLoading.value = true; rankResults.value = [];
+      rankLoading.value = true;
+      rankResults.value = [];
       try {
-        const urls = { protein:`${API}/nutrition/top-protein?limit=${rankLimit.value}`, caffeine:`${API}/nutrition/top-caffeine?limit=${rankLimit.value}`, density:`${API}/nutrition/top-nutrient-density?limit=${rankLimit.value}` };
-        const data = await fetch(urls[rankTab.value]).then(r=>r.json());
+        const endpoints = {
+          protein:  `${API}/nutrition/top-protein?limit=${rankLimit.value}`,
+          caffeine: `${API}/nutrition/top-caffeine?limit=${rankLimit.value}`,
+          density:  `${API}/nutrition/top-nutrient-density?limit=${rankLimit.value}`,
+        };
+        const data = await fetch(endpoints[rankTab.value]).then(r => r.json());
         rankResults.value = data;
         await nextTick();
-        destroy('rank');
-        const labels = data.map(i=>trim(i.name));
-        const values = rankTab.value==='protein' ? data.map(i=>i.protein_per_100g) : rankTab.value==='caffeine' ? data.map(i=>i.caffeine_mg_per_100g) : data.map(i=>i.nutrient_density_score);
-        const color  = rankTab.value==='density' ? C.gold : rankTab.value==='caffeine' ? C.teal : C.green;
-        charts.rank  = mkBar(rankChart.value, labels, values, '', color);
-      } catch(e) { console.error(e); }
-      finally { rankLoading.value = false; }
+        destroyChart('rank');
+        const labels = data.map(i => trim(i.name));
+        const values = rankTab.value === 'protein'  ? data.map(i => i.protein_per_100g)
+                     : rankTab.value === 'caffeine' ? data.map(i => i.caffeine_mg_per_100g)
+                     :                               data.map(i => i.nutrient_density_score);
+        const color  = rankTab.value === 'density'  ? C.gold
+                     : rankTab.value === 'caffeine' ? C.teal
+                     :                               C.green;
+        charts.rank = mkBar(rankChart.value, labels, values, '', color);
+      } catch (e) {
+        console.error('Failed to load rankings:', e);
+      } finally {
+        rankLoading.value = false;
+      }
     }
 
-    // ── Compare ──
+    // ── Compare ───────────────────────────────────────────────────────────────
     const cmpId1     = ref('');
     const cmpId2     = ref('');
     const cmpResult  = ref(null);
@@ -596,53 +1440,236 @@ createApp({
     const cmpError   = ref('');
 
     async function compareIngredients() {
-      if (!cmpId1.value || !cmpId2.value) { cmpError.value = 'Please enter two ingredient IDs.'; return; }
-      cmpLoading.value = true; cmpError.value = ''; cmpResult.value = null;
+      if (!cmpId1.value || !cmpId2.value) {
+        cmpError.value = 'Please enter two ingredient IDs.';
+        return;
+      }
+      cmpLoading.value = true;
+      cmpError.value   = '';
+      cmpResult.value  = null;
       try {
-        const r = await fetch(`${API}/nutrition/compare?id1=${cmpId1.value}&id2=${cmpId2.value}`);
-        if (!r.ok) { const d = await r.json(); throw new Error(d.detail||'Not found'); }
-        cmpResult.value = await r.json();
+        const res = await fetch(`${API}/nutrition/compare?id1=${cmpId1.value}&id2=${cmpId2.value}`);
+        if (!res.ok) { const d = await res.json(); throw new Error(d.detail || 'Not found'); }
+        cmpResult.value = await res.json();
         await nextTick();
-        const n1 = cmpResult.value.ingredient_1.name, n2 = cmpResult.value.ingredient_2.name;
+        const n1  = cmpResult.value.ingredient_1.name;
+        const n2  = cmpResult.value.ingredient_2.name;
         const cmp = cmpResult.value.comparison_per_100g;
-        const fields = ['protein','carbohydrate','fat','fiber','sugars','sodium'];
-        const maxes  = fields.map(f => Math.max(cmp[f]?.[n1]||0, cmp[f]?.[n2]||0, 1));
-        destroy('compare');
+        const fields = ['protein', 'carbohydrate', 'fat', 'fiber', 'sugars', 'sodium'];
+        const maxes  = fields.map(f => Math.max(cmp[f]?.[n1] || 0, cmp[f]?.[n2] || 0, 1));
+        destroyChart('compare');
         charts.compare = mkRadar(compareChart.value, fields, [
-          { label:trim(n1,20), data:fields.map((f,i)=>((cmp[f]?.[n1]||0)/maxes[i])*100), borderColor:C.green, backgroundColor:'rgba(125,186,111,0.15)', pointBackgroundColor:C.green, borderWidth:2 },
-          { label:trim(n2,20), data:fields.map((f,i)=>((cmp[f]?.[n2]||0)/maxes[i])*100), borderColor:C.gold,  backgroundColor:'rgba(212,168,67,0.15)',  pointBackgroundColor:C.gold,  borderWidth:2 },
+          {
+            label: trim(n1, 20),
+            data: fields.map((f, i) => ((cmp[f]?.[n1] || 0) / maxes[i]) * 100),
+            borderColor: C.green, backgroundColor: 'rgba(125,186,111,0.15)',
+            pointBackgroundColor: C.green, borderWidth: 2
+          },
+          {
+            label: trim(n2, 20),
+            data: fields.map((f, i) => ((cmp[f]?.[n2] || 0) / maxes[i]) * 100),
+            borderColor: C.gold, backgroundColor: 'rgba(212,168,67,0.15)',
+            pointBackgroundColor: C.gold, borderWidth: 2
+          },
         ]);
-      } catch(e) { cmpError.value = e.message; }
-      finally { cmpLoading.value = false; }
+      } catch (e) {
+        cmpError.value = e.message;
+      } finally {
+        cmpLoading.value = false;
+      }
     }
 
     function getCmpClass(vals, name, nutrient) {
-      const lowerIsBetter = ['calories','fat','sugars','sodium','cholesterol'];
-      const keys = Object.keys(vals).filter(k=>k!=='difference_pct');
+      const lowerIsBetter = ['calories', 'fat', 'sugars', 'sodium', 'cholesterol'];
+      const keys = Object.keys(vals).filter(k => k !== 'difference_pct');
       if (keys.length < 2) return 'same';
-      const v = vals[name], other = vals[name===keys[0]?keys[1]:keys[0]];
+      const v     = vals[name];
+      const other = vals[name === keys[0] ? keys[1] : keys[0]];
       if (v === other) return 'same';
       return (lowerIsBetter.includes(nutrient) ? v < other : v > other) ? 'better' : 'worse';
     }
 
-    // ── Allergens ──
+    // ── Allergens ─────────────────────────────────────────────────────────────
     const allergenType    = ref('gluten');
     const allergenLimit   = ref(20);
-    const allergenResults = ref({ count:null, ingredients:[], allergen_excluded:'' });
+    const allergenResults = ref({ count: null, ingredients: [], allergen_excluded: '' });
     const allergenLoading = ref(false);
     const allergenError   = ref('');
 
     async function loadAllergenFree() {
-      allergenLoading.value = true; allergenError.value = '';
+      allergenLoading.value = true;
+      allergenError.value   = '';
       try {
-        const r = await fetch(`${API}/allergens/free?exclude=${allergenType.value}&limit=${allergenLimit.value}`);
-        if (!r.ok) throw new Error();
-        allergenResults.value = await r.json();
-      } catch(e) { allergenError.value = 'Failed to fetch allergen data.'; }
-      finally { allergenLoading.value = false; }
+        const res = await fetch(`${API}/allergens/free?exclude=${allergenType.value}&limit=${allergenLimit.value}`);
+        if (!res.ok) throw new Error('Request failed');
+        allergenResults.value = await res.json();
+      } catch (e) {
+        allergenError.value = 'Failed to fetch allergen data.';
+      } finally {
+        allergenLoading.value = false;
+      }
     }
 
-    // ── Recipe ──
+    // ── Recipe Builder ────────────────────────────────────────────────────────
+    const builderToken       = ref('');
+    const builderUsername    = ref('');
+    const builderLoginUser   = ref('');
+    const builderLoginPass   = ref('');
+    const builderAuthLoading = ref(false);
+    const builderAuthError   = ref('');
+    const builderAuthSuccess = ref('');
+
+    const builderName        = ref('');
+    const builderDescription = ref('');
+    const builderCuisine     = ref('');
+    const builderDifficulty  = ref('medium');
+    const builderPrepTime    = ref(20);
+
+    const builderIngSearch   = ref('');
+    const builderIngResults  = ref([]);
+    const builderIngLoading  = ref(false);
+    const builderIngredients = ref([]);
+
+    const builderCreateLoading = ref(false);
+    const builderCreateError   = ref('');
+    const builderCreateSuccess = ref('');
+
+    async function builderLogin() {
+      builderAuthLoading.value = true;
+      builderAuthError.value   = '';
+      builderAuthSuccess.value = '';
+      try {
+        const res = await fetch(`${API}/users/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `username=${encodeURIComponent(builderLoginUser.value)}&password=${encodeURIComponent(builderLoginPass.value)}`,
+        });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.detail || 'Login failed'); }
+        const data = await res.json();
+        builderToken.value    = data.access_token;
+        builderUsername.value = builderLoginUser.value;
+        builderLoginPass.value = '';
+      } catch (e) {
+        builderAuthError.value = e.message;
+      } finally {
+        builderAuthLoading.value = false;
+      }
+    }
+
+    async function builderRegister() {
+      if (!builderLoginUser.value || !builderLoginPass.value) {
+        builderAuthError.value = 'Please enter a username and password first.';
+        return;
+      }
+      builderAuthLoading.value = true;
+      builderAuthError.value   = '';
+      builderAuthSuccess.value = '';
+      try {
+        const res = await fetch(`${API}/users/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: builderLoginUser.value,
+            email:    `${builderLoginUser.value}@nutritrack.local`,
+            password: builderLoginPass.value,
+          }),
+        });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.detail || 'Registration failed'); }
+        builderAuthSuccess.value = 'Account created! Logging you in...';
+        await builderLogin();
+      } catch (e) {
+        builderAuthError.value = e.message;
+      } finally {
+        builderAuthLoading.value = false;
+      }
+    }
+
+    async function builderSearchIngredients() {
+      if (!builderIngSearch.value.trim()) return;
+      builderIngLoading.value = true;
+      try {
+        const res = await fetch(`${API}/ingredients/?search=${encodeURIComponent(builderIngSearch.value)}&limit=8`);
+        const data = await res.json();
+        builderIngResults.value = data.map(i => ({ ...i, _qty: 100 }));
+      } catch (e) {
+        console.error(e);
+      } finally {
+        builderIngLoading.value = false;
+      }
+    }
+
+    function addToRecipe(ing) {
+      const qty = Number(ing._qty) || 100;
+      if (qty <= 0) return;
+      // Avoid duplicates
+      const exists = builderIngredients.value.find(i => i.ingredient_id === ing.id);
+      if (exists) {
+        exists.quantity_g += qty;
+        return;
+      }
+      builderIngredients.value.push({
+        ingredient_id: ing.id,
+        name: ing.name,
+        quantity_g: qty,
+      });
+    }
+
+    async function createRecipe() {
+      if (!builderName.value) { builderCreateError.value = 'Please enter a recipe name.'; return; }
+      if (!builderIngredients.value.length) { builderCreateError.value = 'Please add at least one ingredient.'; return; }
+
+      builderCreateLoading.value = true;
+      builderCreateError.value   = '';
+      builderCreateSuccess.value = '';
+
+      try {
+        const res = await fetch(`${API}/recipes/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${builderToken.value}`,
+          },
+          body: JSON.stringify({
+            name: builderName.value,
+            description: builderDescription.value,
+            cuisine_type: builderCuisine.value,
+            difficulty: builderDifficulty.value,
+            prep_time_minutes: Number(builderPrepTime.value) || 0,
+            ingredients: builderIngredients.value.map(i => ({
+              ingredient_id: i.ingredient_id,
+              quantity_g: i.quantity_g,
+            })),
+          }),
+        });
+
+        if (!res.ok) { const d = await res.json(); throw new Error(d.detail || 'Failed to create recipe'); }
+        const data = await res.json();
+
+        builderCreateSuccess.value = `Recipe "${data.name}" created with ID ${data.id}! Redirecting to analysis...`;
+
+        // Auto-navigate to analyser after 1.5s
+        setTimeout(() => {
+          recipeId.value = data.id;
+          page.value = 'recipe';
+          analyseRecipe();
+          // Reset builder
+          builderName.value = '';
+          builderDescription.value = '';
+          builderCuisine.value = '';
+          builderDifficulty.value = 'medium';
+          builderIngredients.value = [];
+          builderIngResults.value = [];
+          builderCreateSuccess.value = '';
+        }, 1500);
+
+      } catch (e) {
+        builderCreateError.value = e.message;
+      } finally {
+        builderCreateLoading.value = false;
+      }
+    }
+
+    // ── Recipe Analyser ───────────────────────────────────────────────────────
     const recipeId      = ref('');
     const recipeResult  = ref(null);
     const recipeLoading = ref(false);
@@ -650,30 +1677,67 @@ createApp({
 
     async function analyseRecipe() {
       if (!recipeId.value) { recipeError.value = 'Please enter a recipe ID.'; return; }
-      recipeLoading.value = true; recipeError.value = ''; recipeResult.value = null;
+      recipeLoading.value = true;
+      recipeError.value   = '';
+      recipeResult.value  = null;
       try {
-        const r = await fetch(`${API}/nutrition/recipe/${recipeId.value}`);
-        if (!r.ok) { const d = await r.json(); throw new Error(d.detail||'Recipe not found'); }
-        recipeResult.value = await r.json();
+        const res = await fetch(`${API}/nutrition/recipe/${recipeId.value}`);
+        if (!res.ok) { const d = await res.json(); throw new Error(d.detail || 'Recipe not found'); }
+        recipeResult.value = await res.json();
         await nextTick();
         const n = recipeResult.value.nutrition;
-        destroy('recipePie'); destroy('recipeBar');
-        charts.recipePie = mkPie(recipePieChart.value, ['Protein','Carbohydrates','Fat'], [n.protein, n.carbohydrate, n.fat], [C.green, C.blue, C.gold]);
-        charts.recipeBar = mkBar(recipeBarChart.value, ['Protein','Carbs','Fat','Fibre','Sugars'], [n.protein, n.carbohydrate, n.fat, n.fiber, n.sugars], 'grams', [C.green, C.blue, C.gold, C.teal, C.red]);
-      } catch(e) { recipeError.value = e.message; }
-      finally { recipeLoading.value = false; }
+        destroyChart('recipePie');
+        destroyChart('recipeBar');
+        charts.recipePie = mkPie(
+          recipePieChart.value,
+          ['Protein', 'Carbohydrates', 'Fat'],
+          [n.protein, n.carbohydrate, n.fat],
+          [C.green, C.blue, C.gold]
+        );
+        charts.recipeBar = mkBar(
+          recipeBarChart.value,
+          ['Protein', 'Carbs', 'Fat', 'Fibre', 'Sugars'],
+          [n.protein, n.carbohydrate, n.fat, n.fiber, n.sugars],
+          'grams',
+          [C.green, C.blue, C.gold, C.teal, C.red]
+        );
+      } catch (e) {
+        recipeError.value = e.message;
+      } finally {
+        recipeLoading.value = false;
+      }
     }
 
-    onMounted(() => { loadRankings(); loadHomeCharts(); });
+    // ── Init ──────────────────────────────────────────────────────────────────
+    onMounted(() => {
+      loadRankings();
+      loadHomeCharts();
+    });
 
     return {
       API, isLocal, page, navItems,
+      // Home
       homeSearch, goSearch, homeProteinChart, homeDensityChart,
-      searchQuery, searchLimit, searchResults, searchLoading, searchError, searchDone, searchIngredients, searchChart,
+      // Search
+      searchQuery, searchLimit, searchResults, searchLoading, searchError, searchDone,
+      searchIngredients, searchChart,
+      // Rankings
       rankTab, rankLimit, rankResults, rankLoading, loadRankings, rankChart,
-      cmpId1, cmpId2, cmpResult, cmpLoading, cmpError, compareIngredients, getCmpClass, compareChart,
+      // Compare
+      cmpId1, cmpId2, cmpResult, cmpLoading, cmpError,
+      compareIngredients, getCmpClass, compareChart,
+      // Allergens
       allergenType, allergenLimit, allergenResults, allergenLoading, allergenError, loadAllergenFree,
-      recipeId, recipeResult, recipeLoading, recipeError, analyseRecipe, recipePieChart, recipeBarChart,
+      // Builder
+      builderToken, builderUsername, builderLoginUser, builderLoginPass,
+      builderAuthLoading, builderAuthError, builderAuthSuccess,
+      builderName, builderDescription, builderCuisine, builderDifficulty, builderPrepTime,
+      builderIngSearch, builderIngResults, builderIngLoading, builderIngredients,
+      builderCreateLoading, builderCreateError, builderCreateSuccess,
+      builderLogin, builderRegister, builderSearchIngredients, addToRecipe, createRecipe,
+      // Recipe analyser
+      recipeId, recipeResult, recipeLoading, recipeError, analyseRecipe,
+      recipePieChart, recipeBarChart,
     };
   }
 }).mount('#app');
