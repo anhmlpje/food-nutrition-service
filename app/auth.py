@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -8,12 +9,21 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models
 
-SECRET_KEY = "nutritrack-secret-key-change-in-production"
+SECRET_KEY = os.getenv("NUTRITRACK_SECRET_KEY", "dev-only-change-me")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("NUTRITRACK_TOKEN_EXPIRE_MINUTES", "30"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
+
+
+def ensure_auth_config() -> None:
+    """Guard against running with insecure auth configuration in production."""
+    app_env = os.getenv("APP_ENV", "development").lower()
+    if app_env in {"production", "staging"} and SECRET_KEY == "dev-only-change-me":
+        raise RuntimeError(
+            "NUTRITRACK_SECRET_KEY must be set in production or staging environments."
+        )
 
 def hash_password(password: str) -> str:
     """Hash a plain-text password using bcrypt (max 72 bytes)."""

@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models, schemas
-from app.auth import hash_password, verify_password, create_access_token
+from app.auth import hash_password, verify_password, create_access_token, get_current_user
 from app.limiter import limiter
 import re
 
@@ -78,6 +78,6 @@ def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db
 
 
 @router.get("/me", response_model=schemas.UserOut)
-def get_me(current_user: models.User = Depends()):
+def get_me(current_user: models.User = Depends(get_current_user)):
     """Return the currently authenticated user's profile."""
     return current_user

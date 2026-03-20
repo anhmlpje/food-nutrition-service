@@ -69,7 +69,7 @@ def seed():
                 potassium=parse_float(row.get("potassium", "0")),
                 vitamin_c=parse_float(row.get("vitamin_c", "0")),
                 vitamin_a=parse_float(row.get("vitamin_a", "0")),
-                iron=parse_float(row.get("irom", "0")),
+                iron=parse_float(row.get("iron", "0")),
                 caffeine=parse_float(row.get("caffeine", "0")),
                 water=parse_float(row.get("water", "0")),
                 cholesterol=parse_float(row.get("cholesterol", "0")),
